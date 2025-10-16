@@ -1,0 +1,174 @@
+Тест-кейсы для API из итерации 2:
+1. Депозит денег пользователем
+2. Перевод денег с одного аккаунта на другой
+3. Изменение имени пользователя
+
+
+Требования к API
+Депозит (Deposit):
+— Максимальная сумма: 5000
+— Сумма должна быть положительной
+— Нельзя делать депозит в чужой аккаунт или несуществующий
+
+Перевод (Transfer):
+— Максимальная сумма: 10000
+— Сумма должна быть положительной и не превышать баланс отправителя
+— Можно переводить между своими аккаунтами и чужими
+
+Имя в профиле (name):
+- Два слова, состоящее из букв, разделенные пробелом
+
+
+Депозит денег пользователем
+
+### Позитивный тест: пользователь может сделать депозит на аккаунт с суммой 1 (граничные значения)
+### Позитивный тест: пользователь может сделать депозит на аккаунт с суммой 4999 (граничные значения)
+### Позитивный тест: пользователь может сделать депозит на аккаунт с суммой 5000 (граничные значения)
+curl --request POST \
+  --url http://localhost:4111/api/v1/accounts/deposit \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 1,
+  "balance": 1
+}'
+
+
+### Негативный тест: пользователь не может сделать депозит на аккаунт с отрицательным значением -1 (граничные значения)
+### Негативный тест: пользователь не может сделать депозит на аккаунт со значением 0 (граничные значения)
+### Негативный тест: пользователь не может сделать депозит на аккаунт больше 5000 (граничные значения)
+curl --request POST \
+  --url http://localhost:4111/api/v1/accounts/deposit \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 1,
+  "balance": 6000
+}'
+
+### Негативный тест: пользователь не может сделать депозит на чужой аккаунт
+### Негативный тест: пользователь не может сделать депозит на несуществующий аккаунт
+curl --request POST \
+  --url http://localhost:4111/api/v1/accounts/deposit \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 1999,
+  "balance": 1000
+}'
+
+
+Перевод денег с одного аккаунта на другой
+### Позитивный тест: пользователь может сделать перевод на аккаунт с суммой 1 (граничные значения)
+### Позитивный тест: пользователь может сделать перевод на аккаунт с суммой 9999 (граничные значения)
+### Позитивный тест: пользователь может сделать перевод на аккаунт с суммой 10000 (граничные значения)
+curl --request POST \
+  --url http://localhost:4111/api/v1/accounts/transfer \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "senderAccountId": 1,
+  "receiverAccountId": 2,
+  "amount": 9999
+}'
+
+### Позитивный тест: пользователь может сделать перевод на чужой аккаунт
+curl --request POST \
+  --url http://localhost:4111/api/v1/accounts/transfer \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "senderAccountId": 1,
+  "receiverAccountId": 10,
+  "amount": 1000
+}'
+
+
+### Негативный тест: пользователь не может сделать перевод на аккаунт с отрицательным значением -1
+### Негативный тест: пользователь не может сделать перевод на аккаунт со значением 0
+### Негативный тест: пользователь не может сделать перевод на аккаунт со значением 10001
+curl --request POST \
+  --url http://localhost:4111/api/v1/accounts/transfer \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "senderAccountId": 1,
+  "receiverAccountId": 2,
+  "amount": 10001
+}'
+
+### Негативный тест: пользователь не может сделать перевод на аккаунт со значением больше баланса отправителя
+curl --request POST \
+  --url http://localhost:4111/api/v1/accounts/transfer \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "senderAccountId": 1,
+  "receiverAccountId": 2,
+  "amount": 5000
+}'
+
+
+Изменение имени пользователя
+### Позитивный тест: пользователь может изменить имя с двумя словами разделенными пробелом
+curl --request PUT \
+  --url http://localhost:4111/api/v1/customer/profile \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "name": "rustam test"
+}'
+
+
+### Негативный тест: пользователь не может изменить имя с одним словом
+curl --request PUT \
+  --url http://localhost:4111/api/v1/customer/profile \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "name": "rustam"
+}'
+
+
+### Негативный тест: пользователь не может изменить имя с тремя словами
+curl --request PUT \
+  --url http://localhost:4111/api/v1/customer/profile \
+  --header 'Authorization: Basic cnVzdGFtMTp2ZXJ5c1RSb25nUGFzc3dvcmQzMyQ=' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "name": "rustam test test"
+}'
+
+
+
+Дополнительные тесты после уточнения требований
+Депозит - позитивные:
+### Депозит с дробным значением (1.50) — если API поддерживает десятичные суммы.
+### Повторный депозит подряд — проверить корректное увеличение баланса (напр. 1000 + 1000 = 2000).
+### Депозит в собственный аккаунт с уже существующим балансом — проверить корректность суммирования.
+
+Депозит - негативные:
+### Сумма в неправильном формате (строка "1000" или "abc" вместо числа).
+### Отсутствие обязательного поля balance или id.
+### Неверный тип данных в id (например, строка).
+### Попытка депозитить без авторизации / с неверным токеном — проверка 401 Unauthorized.
+
+
+Перевод денег - негативные:
+### Неверные типы данных (amount — строка, senderAccountId — null).
+### Отсутствует одно из полей в запросе (например, receiverAccountId).
+### Попытка перевода без авторизации / с невалидным токеном.
+
+
+Изменение имени пользователя - позитивные:
+### Изменение имени с заглавными буквами
+### Изменение имени с не английскими буквами (другие языки)
+### Проверка длины имени — минимальное и максимальное допустимое значение.
+
+Изменение имени пользователя - негативные:
+### Имя с цифрами или спецсимволами — "Rustam123 Test" или "Rustam @ Test".
+### Имя с двумя пробелами между словами — "Rustam Test".
+### Имя с пробелом в начале или конце — " Rustam Test ".
+### Отсутствие поля name в теле запроса.
+### Пустая строка как имя.
+### Попытка изменения имени без авторизации.
