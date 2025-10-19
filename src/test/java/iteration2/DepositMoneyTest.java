@@ -7,10 +7,12 @@ import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
 import java.util.List;
+import java.util.Random;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class DepositMoneyTest {
   @BeforeAll
@@ -18,8 +20,13 @@ public class DepositMoneyTest {
     RestAssured.filters(List.of(new RequestLoggingFilter(), new ResponseLoggingFilter()));
   }
 
-  @Test
-  public void userCanDepositMoneyTest() {
+  @ParameterizedTest
+  @ValueSource(ints = {1, 4999, 5000})
+  public void userCanDepositMoneyTest(int depositAmount) {
+    // генерируем уникальный username один раз
+    String username = "usr" + new Random().nextInt(100000);
+    String password = "Rustam12000!";
+
     // создание пользователя
     given()
         .contentType(ContentType.JSON)
@@ -28,10 +35,11 @@ public class DepositMoneyTest {
         .body(
             """
             {
-              "username": "rustam1223",
-              "password": "Rustam12000!",
+              "username": "%s",
+              "password": "%s",
               "role": "USER"
-            }""")
+            }"""
+                .formatted(username, password))
         .post("http://localhost:4111/api/v1/admin/users")
         .then()
         .assertThat()
@@ -45,9 +53,10 @@ public class DepositMoneyTest {
             .body(
                 """
                 {
-                  "username": "rustam1223",
-                  "password": "Rustam12000!"
-                }""")
+                  "username": "%s",
+                  "password": "%s"
+                }"""
+                    .formatted(username, password))
             .post("http://localhost:4111/api/v1/auth/login")
             .then()
             .assertThat()
@@ -90,7 +99,7 @@ public class DepositMoneyTest {
             .extract()
             .path("accounts[0].id");
 
-    // делаем депозит денег на аккаунт
+    // делаем депозит
     given()
         .header("Authorization", userAuthHeader)
         .contentType(ContentType.JSON)
@@ -99,22 +108,18 @@ public class DepositMoneyTest {
             """
             {
               "id": %d,
-              "balance": 1000
+              "balance": %d
             }
             """
-                .formatted(accountId))
+                .formatted(accountId, depositAmount))
         .post("http://localhost:4111/api/v1/accounts/deposit")
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK)
-        // Проверяем, что баланс равен 1000.0
-        .body("balance", Matchers.equalTo(1000.0F))
-        // Проверяем, что массив transactions не null
+        .body("balance", Matchers.equalTo((float) depositAmount))
         .body("transactions", Matchers.notNullValue())
-        // Проверяем, что в массиве транзакций есть хотя бы 1 элемент
         .body("transactions.size()", Matchers.greaterThan(0))
-        // Проверяем, что у первой транзакции amount = 1000.0 и type = "DEPOSIT"
-        .body("transactions[0].amount", Matchers.equalTo(1000.0F))
+        .body("transactions[0].amount", Matchers.equalTo((float) depositAmount))
         .body("transactions[0].type", Matchers.equalTo("DEPOSIT"));
   }
 }
