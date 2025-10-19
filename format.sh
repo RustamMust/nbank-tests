@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 
-# === Настройки ===
-# Путь к JAR (укажи полный путь, если он не в корне проекта)
+# === Settings ===
+# Path to the JAR (use the full path if it's not in the project root)
 JAR_PATH="./google-java-format-1.23.0-all-deps.jar"
 
-# === Проверка наличия файла ===
+# === Check if the file exists ===
 if [ ! -f "$JAR_PATH" ]; then
-  echo "❌ Не найден файл $JAR_PATH"
-  echo "➡️  Скачай его по ссылке:"
+  echo "❌ File $JAR_PATH not found"
+  echo "➡️  Download it from:"
   echo "https://github.com/google/google-java-format/releases/download/v1.23.0/google-java-format-1.23.0-all-deps.jar"
   exit 1
 fi
 
-# === Форматирование ===
-echo "🧼 Форматируем Java-файлы..."
+# === Formatting ===
+echo "🧼 Formatting Java files..."
 find src -name "*.java" | xargs java -jar "$JAR_PATH" --replace
 
 if [ $? -eq 0 ]; then
-  echo "✅ Форматирование завершено успешно!"
+  echo "✅ Formatting completed successfully!"
 else
-  echo "⚠️ Произошла ошибка при форматировании."
+  echo "⚠️ An error occurred during formatting."
 fi
