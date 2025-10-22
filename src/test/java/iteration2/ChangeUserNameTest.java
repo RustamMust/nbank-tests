@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -65,6 +66,20 @@ public class ChangeUserNameTest {
     String userToken = createUserAndGetToken(username, password);
 
     String newUserName = "Rustam Test";
+
+    // делаем GET профиля, чтобы получить исходное имя при создании
+    String initialName =
+        given()
+            .header("Authorization", userToken)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .jsonPath()
+            .getString("name");
+
+    // убеждаемся, что новое имя отличается от текущего
+    Assertions.assertNotEquals(newUserName, initialName, "Initial name should differ from new one");
 
     // меняем имя у юзера
     given()

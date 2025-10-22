@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -66,7 +67,18 @@ public class ChangeUserNameNegativeTest {
 
     String newUserName = "Rustam";
 
-    // меняем имя у юзера
+    // делаем GET профиля, чтобы получить исходное имя при создании
+    String initialName =
+        given()
+            .header("Authorization", userToken)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .jsonPath()
+            .getString("name");
+
+    // меняем имя у юзера с невалидными данными
     given()
         .header("Authorization", userToken)
         .contentType(ContentType.JSON)
@@ -81,5 +93,19 @@ public class ChangeUserNameNegativeTest {
         .then()
         .statusCode(HttpStatus.SC_BAD_REQUEST)
         .body(Matchers.equalTo("Name must contain two words with letters only"));
+
+    // делаем GET профиля, чтобы получить имя
+    String actualName =
+        given()
+            .header("Authorization", userToken)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .jsonPath()
+            .getString("name");
+
+    // проверяем, что имя осталось прежним
+    Assertions.assertEquals(initialName, actualName, "The name should not have changed.");
   }
 }
