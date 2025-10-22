@@ -52,6 +52,7 @@ public class CreateAccountTest {
             .then()
             .assertThat()
             .statusCode(HttpStatus.SC_OK)
+                // Параметр 5: достать как переменную
             .extract()
             .header("Authorization");
 
