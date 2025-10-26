@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -74,30 +75,24 @@ public class DepositMoneyTest {
         .assertThat()
         .statusCode(HttpStatus.SC_CREATED);
 
-    // запрашиваем созданный профиль юзера и проверяем, что в нем есть созданный аккаунт
-    given()
-        .header("Authorization", userAuthHeader)
-        .contentType(ContentType.JSON)
-        .accept(ContentType.JSON)
-        .get("http://localhost:4111/api/v1/customer/profile")
-        .then()
-        .assertThat()
-        .statusCode(HttpStatus.SC_OK)
-        .body("accounts", Matchers.notNullValue());
-
-    // получаем id аккаунта из профиля
-    int accountId =
+    // запрашиваем созданный профиль
+    var profileBefore =
         given()
             .header("Authorization", userAuthHeader)
-            .contentType(ContentType.JSON)
             .accept(ContentType.JSON)
-            .when()
             .get("http://localhost:4111/api/v1/customer/profile")
             .then()
-            .assertThat()
             .statusCode(HttpStatus.SC_OK)
-            .extract()
-            .path("accounts[0].id");
+            .extract();
+
+    // получаем id аккаунта
+    int accountId = profileBefore.path("accounts[0].id");
+
+    // получаем баланс до депозита
+    float initialBalance = profileBefore.path("accounts[0].balance");
+
+    // убеждаемся, что баланс до депозита 0 (или неотрицательный)
+    Assertions.assertTrue(initialBalance >= 0, "Initial balance should be non-negative");
 
     // делаем депозит
     given()
@@ -116,10 +111,30 @@ public class DepositMoneyTest {
         .then()
         .assertThat()
         .statusCode(HttpStatus.SC_OK)
-        .body("balance", Matchers.equalTo((float) depositAmount))
+        .body("balance", Matchers.equalTo(initialBalance + depositAmount))
         .body("transactions", Matchers.notNullValue())
         .body("transactions.size()", Matchers.greaterThan(0))
         .body("transactions[0].amount", Matchers.equalTo((float) depositAmount))
         .body("transactions[0].type", Matchers.equalTo("DEPOSIT"));
+
+    // получаем профиль после депозита
+    var profileAfter =
+        given()
+            .header("Authorization", userAuthHeader)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract();
+
+    // получаем баланс после депозита
+    float finalBalance = profileAfter.path("accounts[0].balance");
+
+    // проверяем, что баланс увеличился на сумму депозита
+    Assertions.assertEquals(
+        initialBalance + depositAmount,
+        finalBalance,
+        0.001,
+        "Balance after deposit should increase by deposit amount");
   }
 }

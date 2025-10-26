@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -108,12 +109,35 @@ public class TransferMoneyTest {
     String senderUsername = "usr" + new Random().nextInt(100000);
     String senderToken = createUserAndGetToken(senderUsername, password);
     int senderAccountId = createAccountAndGetId(senderToken);
+
+    // выполняем депозит
     depositToAccount(senderToken, senderAccountId, transferAmount);
 
     // создаем получателя
     String receiverUsername = "usr" + new Random().nextInt(100000);
     String receiverToken = createUserAndGetToken(receiverUsername, password);
     int receiverAccountId = createAccountAndGetId(receiverToken);
+
+    // получаем балансы до перевода
+    float senderBalanceBefore =
+        given()
+            .header("Authorization", senderToken)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    float receiverBalanceBefore =
+        given()
+            .header("Authorization", receiverToken)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
 
     // перевод
     given()
@@ -136,5 +160,39 @@ public class TransferMoneyTest {
         .body("senderAccountId", Matchers.equalTo(senderAccountId))
         .body("receiverAccountId", Matchers.equalTo(receiverAccountId))
         .body("amount", Matchers.equalTo((float) transferAmount));
+
+    // получаем балансы после перевода
+    float senderBalanceAfter =
+        given()
+            .header("Authorization", senderToken)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    float receiverBalanceAfter =
+        given()
+            .header("Authorization", receiverToken)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    // проверяем изменения балансов
+    Assertions.assertEquals(
+        senderBalanceBefore - transferAmount,
+        senderBalanceAfter,
+        0.001,
+        "Sender balance should decrease by transfer amount");
+
+    Assertions.assertEquals(
+        receiverBalanceBefore + transferAmount,
+        receiverBalanceAfter,
+        0.001,
+        "Receiver balance should increase by transfer amount");
   }
 }

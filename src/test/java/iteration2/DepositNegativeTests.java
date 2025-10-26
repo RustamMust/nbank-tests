@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -92,6 +93,18 @@ public class DepositNegativeTests {
     String token = createUserAndGetToken(username, password);
     int accountId = createAccountAndGetId(token);
 
+    // получаем баланс до депозита
+    float initialBalance =
+        given()
+            .header("Authorization", token)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    // попытка депозита
     given()
         .header("Authorization", token)
         .contentType(ContentType.JSON)
@@ -109,17 +122,44 @@ public class DepositNegativeTests {
         .assertThat()
         .statusCode(HttpStatus.SC_BAD_REQUEST)
         .body(Matchers.equalTo("Deposit amount must be at least 0.01"));
+
+    // получаем баланс после депозита
+    float finalBalance =
+        given()
+            .header("Authorization", token)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    // проверяем, что баланс не изменился
+    Assertions.assertEquals(
+        initialBalance, finalBalance, 0.001, "Balance should not change after invalid deposit");
   }
 
   /** Негативные граничные значения для депозита 5001 */
   @ParameterizedTest
   @ValueSource(ints = {5001})
-  public void userCannotDepositInvalidLLargeAmounts(int depositAmount) {
+  public void userCannotDepositInvalidLargeAmounts(int depositAmount) {
     String username = "usr" + new Random().nextInt(100000);
     String password = "Rustam12000!";
     String token = createUserAndGetToken(username, password);
     int accountId = createAccountAndGetId(token);
 
+    // получаем баланс до депозита
+    float initialBalance =
+        given()
+            .header("Authorization", token)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    // попытка депозита
     given()
         .header("Authorization", token)
         .contentType(ContentType.JSON)
@@ -137,6 +177,21 @@ public class DepositNegativeTests {
         .assertThat()
         .statusCode(HttpStatus.SC_BAD_REQUEST)
         .body(Matchers.equalTo("Deposit amount cannot exceed 5000"));
+
+    // получаем баланс после депозита
+    float finalBalance =
+        given()
+            .header("Authorization", token)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    // проверяем, что баланс не изменился
+    Assertions.assertEquals(
+        initialBalance, finalBalance, 0.001, "Balance should not change after invalid deposit");
   }
 
   /** Негативный тест: депозит на чужой аккаунт */
@@ -152,6 +207,17 @@ public class DepositNegativeTests {
 
     // создаем аккаунт у первого пользователя
     int accountIdUser1 = createAccountAndGetId(token1);
+
+    // получаем баланс до попытки депозита
+    float initialBalance =
+        given()
+            .header("Authorization", token1)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
 
     // второй пользователь пытается внести депозит в аккаунт первого
     given()
@@ -171,6 +237,24 @@ public class DepositNegativeTests {
         .assertThat()
         .statusCode(HttpStatus.SC_FORBIDDEN)
         .body(Matchers.equalTo("Unauthorized access to account"));
+
+    // получаем баланс после депозита
+    float finalBalance =
+        given()
+            .header("Authorization", token1)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    // проверяем, что баланс не изменился
+    Assertions.assertEquals(
+        initialBalance,
+        finalBalance,
+        0.001,
+        "Balance should not change after unauthorized deposit");
   }
 
   /** Негативный тест: депозит на несуществующий аккаунт */
@@ -179,9 +263,23 @@ public class DepositNegativeTests {
     String username = "usr" + new Random().nextInt(100000);
     String password = "Rustam12000!";
     String token = createUserAndGetToken(username, password);
+    // создаем реальный аккаунт, чтобы можно было считать баланс
+    createAccountAndGetId(token);
 
     int nonExistingAccountId = 999999;
 
+    // получаем баланс до депозита
+    float initialBalance =
+        given()
+            .header("Authorization", token)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    // выполняем попытку депозита в несуществующий аккаунт
     given()
         .header("Authorization", token)
         .contentType(ContentType.JSON)
@@ -199,5 +297,20 @@ public class DepositNegativeTests {
         .assertThat()
         .statusCode(HttpStatus.SC_FORBIDDEN)
         .body(Matchers.equalTo("Unauthorized access to account"));
+
+    // получаем баланс после
+    float finalBalance =
+        given()
+            .header("Authorization", token)
+            .accept(ContentType.JSON)
+            .get("http://localhost:4111/api/v1/customer/profile")
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .extract()
+            .path("accounts[0].balance");
+
+    // проверяем, что баланс не изменился
+    Assertions.assertEquals(
+        initialBalance, finalBalance, 0.001, "Balance should not change after invalid deposit");
   }
 }
