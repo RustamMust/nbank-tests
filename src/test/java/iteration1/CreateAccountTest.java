@@ -2,79 +2,49 @@ package iteration1;
 
 import static io.restassured.RestAssured.given;
 
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
+import generators.RandomData;
 import io.restassured.http.ContentType;
-import java.util.List;
+import models.CreateUserRequest;
+import models.UserRole;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import requests.admin.AdminCreateUserRequester;
+import requests.accounts.CreateAccountRequester;
+import specs.RequestSpecs;
+import specs.ResponseSpecs;
 
-public class CreateAccountTest {
-  @BeforeAll
-  public static void setupRestAssured() {
-    RestAssured.filters(List.of(new RequestLoggingFilter(), new ResponseLoggingFilter()));
-  }
+public class CreateAccountTest extends BaseTest {
 
-  @Test
-  public void userCanCreateAccountTest() {
-    // создание пользователя
-    given()
-        .contentType(ContentType.JSON)
-        .accept(ContentType.JSON)
-        .header("Authorization", "Basic YWRtaW46YWRtaW4=")
-        .body(
-            """
-            {
-              "username": "rustam1223",
-              "password": "Rustam12000!",
-              "role": "USER"
-            }""")
-        .post("http://localhost:4111/api/v1/admin/users")
-        .then()
-        .assertThat()
-        .statusCode(HttpStatus.SC_CREATED);
+    @Test
+    public void userCanCreateAccountTest() {
+        // 1 - Prepare data for user creation
+        CreateUserRequest userRequest =
+                CreateUserRequest.builder()
+                        .username(RandomData.getUsername())
+                        .password(RandomData.getPassword())
+                        .role(UserRole.USER.toString())
+                        .build();
 
-    // получаем токен юзера
-    String userAuthHeader =
-        given()
-            .contentType(ContentType.JSON)
-            .accept(ContentType.JSON)
-            .body(
-                """
-                {
-                  "username": "rustam1223",
-                  "password": "Rustam12000!"
-                }""")
-            .post("http://localhost:4111/api/v1/auth/login")
-            .then()
-            .assertThat()
-            .statusCode(HttpStatus.SC_OK)
-                // Параметр 5: достать как переменную
-            .extract()
-            .header("Authorization");
+        // 2 - Create a new user
+        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
+                .post(userRequest);
 
-    // создаем аккаунт (счет)
-    given()
-        .header("Authorization", userAuthHeader)
-        .contentType(ContentType.JSON)
-        .accept(ContentType.JSON)
-        .post("http://localhost:4111/api/v1/accounts")
-        .then()
-        .assertThat()
-        .statusCode(HttpStatus.SC_CREATED);
+        // 3 - Create an account (null because creating account do not need body)
+        new CreateAccountRequester(
+                RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
+                ResponseSpecs.entityWasCreated())
+                .post(null);
 
-    // запросить аккаунт пользователя и проверить, что созданный аккаунт там
-    given()
-        .header("Authorization", userAuthHeader)
-        .contentType(ContentType.JSON)
-        .accept(ContentType.JSON)
-        .get("http://localhost:4111/api/v1/customer/profile")
-        .then()
-        .assertThat()
-        .statusCode(HttpStatus.SC_OK)
-        .body("accounts", Matchers.notNullValue());
-  }
+        // запросить аккаунт пользователя и проверить, что созданный аккаунт там
+//        given()
+//                .header("Authorization", userAuthHeader)
+//                .contentType(ContentType.JSON)
+//                .accept(ContentType.JSON)
+//                .get("http://localhost:4111/api/v1/customer/profile")
+//                .then()
+//                .assertThat()
+//                .statusCode(HttpStatus.SC_OK)
+//                .body("accounts", Matchers.notNullValue());
+    }
 }

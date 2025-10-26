@@ -1,78 +1,49 @@
 package iteration1;
 
-import static io.restassured.RestAssured.given;
-
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import io.restassured.http.ContentType;
-import java.util.List;
-
-import io.restassured.specification.RequestSpecification;
-import io.restassured.specification.ResponseSpecification;
-import org.apache.http.HttpStatus;
+import generators.RandomData;
+import models.CreateUserRequest;
+import models.UserRole;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import requests.admin.AdminCreateUserRequester;
+import requests.authentication.LoginUserRequester;
+import specs.RequestSpecs;
+import specs.ResponseSpecs;
 
-public class LoginUserTest {
-  @BeforeAll
-  public static void setupRestAssured() {
-    RestAssured.filters(List.of(new RequestLoggingFilter(), new ResponseLoggingFilter()));
-  }
+public class LoginUserTest extends BaseTest {
 
-  @Test
-  public void adminCanGenerateAuthTokenTest() {
-      // жесткая связка: эндпоинт, JSON запроса и JSON ответа
-    given()
-            .spec(RequestSpecification) // Параметр 1: спецификация запроса (хедеры)
-            // Параметр 2: тело запроса
-            .body(
-            """
-            {
-              "username": "admin",
-              "password": "admin"
-            }""")
-            // Параметр 3: эндпоинт
-        .post("http://localhost:4111/api/v1/auth/login")
-        .then()
-        .assertThat()
-            // Параметр 4: спецификация ответа (статус код, проверки)
-            .spec(ResponseSpecification);
-  }
+    @Test
+    public void adminCanGenerateAuthTokenTest() {
+        // 1 - Prepare data for admin user creation
+        models.LoginUserRequest userRequest =
+                models.LoginUserRequest.builder().username("admin").password("admin").build();
 
-  @Test
-  public void userCanGenerateAuthTokenTest() {
-    // создание пользователя
-    given()
-        .contentType(ContentType.JSON)
-        .accept(ContentType.JSON)
-        .header("Authorization", "Basic YWRtaW46YWRtaW4=")
-        .body(
-            """
-            {
-              "username": "rustam1200",
-              "password": "Rustam12000!",
-              "role": "USER"
-            }""")
-        .post("http://localhost:4111/api/v1/admin/users")
-        .then()
-        .assertThat()
-        .statusCode(HttpStatus.SC_CREATED);
+        // 2 - Login user to get "Authorization" token in response header
+        new LoginUserRequester(RequestSpecs.unauthSpec(), ResponseSpecs.requestReturnsOK())
+                .post(userRequest);
+    }
 
-    given()
-        .contentType(ContentType.JSON)
-        .accept(ContentType.JSON)
-        .body(
-            """
-            {
-              "username": "rustam12000",
-              "password": "Rustam12000!"
-            }""")
-        .post("http://localhost:4111/api/v1/auth/login")
-        .then()
-        .assertThat()
-        .statusCode(HttpStatus.SC_OK)
-        .header("Authorization", Matchers.notNullValue());
-  }
+    @Test
+    public void userCanGenerateAuthTokenTest() {
+        // 1 - Prepare data for user creation
+        CreateUserRequest userRequest =
+                CreateUserRequest.builder()
+                        .username(RandomData.getUsername())
+                        .password(RandomData.getPassword())
+                        .role(UserRole.USER.toString())
+                        .build();
+
+        // 2 - Create a new user
+        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
+                .post(userRequest);
+
+        // 3 - Login user to get "Authorization" token in response header
+        new LoginUserRequester(RequestSpecs.unauthSpec(), ResponseSpecs.requestReturnsOK())
+                .post(
+                        models.LoginUserRequest.builder()
+                                .username(userRequest.getUsername())
+                                .password(userRequest.getPassword())
+                                .build())
+                .header("Authorization", Matchers.notNullValue());
+    }
 }
