@@ -1,16 +1,14 @@
 package iteration1;
 
-import static io.restassured.RestAssured.given;
-
 import generators.RandomData;
-import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
 import models.CreateUserRequest;
 import models.UserRole;
-import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
-import requests.admin.AdminCreateUserRequester;
 import requests.accounts.CreateAccountRequester;
+import requests.admin.AdminCreateUserRequester;
+import requests.customer.GetCustomerProfileRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -30,21 +28,17 @@ public class CreateAccountTest extends BaseTest {
         new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
                 .post(userRequest);
 
-        // 3 - Create an account (null because creating account do not need body)
+        // 3 - Create an account (null because body not needed)
+        RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
         new CreateAccountRequester(
-                RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword()),
+                requestSpec,
                 ResponseSpecs.entityWasCreated())
                 .post(null);
 
-        // запросить аккаунт пользователя и проверить, что созданный аккаунт там
-//        given()
-//                .header("Authorization", userAuthHeader)
-//                .contentType(ContentType.JSON)
-//                .accept(ContentType.JSON)
-//                .get("http://localhost:4111/api/v1/customer/profile")
-//                .then()
-//                .assertThat()
-//                .statusCode(HttpStatus.SC_OK)
-//                .body("accounts", Matchers.notNullValue());
+        // 4 - Get user profile and verify that account exists in the profile
+        new GetCustomerProfileRequester(requestSpec, ResponseSpecs.requestReturnsOK())
+                .get()
+                .body("accounts", Matchers.notNullValue())
+                .body("accounts.size()", Matchers.greaterThan(0));
     }
 }
