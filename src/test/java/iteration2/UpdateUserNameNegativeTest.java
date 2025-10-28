@@ -13,7 +13,7 @@ import requests.customer.UpdateCustomerProfileRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
-public class ChangeUserNameNegativeTest extends BaseTest {
+public class UpdateUserNameNegativeTest extends BaseTest {
 
     @Test
     public void userCannotUpdateNameWithSingleWordTest() {
@@ -64,7 +64,7 @@ public class ChangeUserNameNegativeTest extends BaseTest {
                         .extract()
                         .as(GetCustomerProfileResponse.class);
 
-        // 8 - Verify name has not changed
+        // 8 - Assert that name has not changed
         softly.assertThat(updatedProfile.getName())
                 .as("Name should not have changed after invalid update")
                 .isEqualTo(initialName);

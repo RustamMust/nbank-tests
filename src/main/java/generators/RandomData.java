@@ -20,4 +20,8 @@ public class RandomData {
     public static String getInvalidNameSingleWord() {
         return RandomStringUtils.randomAlphabetic(6, 10);
     }
+
+    public static String getValidName() {
+        return RandomStringUtils.randomAlphabetic(5, 8) + " " + RandomStringUtils.randomAlphabetic(5, 8);
+    }
 }
