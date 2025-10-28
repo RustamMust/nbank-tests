@@ -1,113 +1,72 @@
 package iteration2;
 
-import static io.restassured.RestAssured.given;
-
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import io.restassured.http.ContentType;
-
-import java.util.List;
-import java.util.Random;
-
-import org.apache.http.HttpStatus;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import generators.RandomData;
+import iteration1.BaseTest;
+import models.CreateUserRequest;
+import models.GetCustomerProfileResponse;
+import models.UpdateCustomerProfileRequest;
+import models.UserRole;
 import org.junit.jupiter.api.Test;
+import requests.admin.AdminCreateUserRequester;
+import requests.customer.GetCustomerProfileRequester;
+import requests.customer.UpdateCustomerProfileRequester;
+import specs.RequestSpecs;
+import specs.ResponseSpecs;
 
-public class ChangeUserNameNegativeTest {
-    @BeforeAll
-    public static void setupRestAssured() {
-        RestAssured.filters(List.of(new RequestLoggingFilter(), new ResponseLoggingFilter()));
-    }
-
-    private String createUserAndGetToken(String username, String password) {
-        // создаем пользователя
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic YWRtaW46YWRtaW4=")
-                .body(
-                        """
-                                {
-                                  "username": "%s",
-                                  "password": "%s",
-                                  "role": "USER"
-                                }
-                                """
-                                .formatted(username, password))
-                .post("http://localhost:4111/api/v1/admin/users")
-                .then()
-                .statusCode(HttpStatus.SC_CREATED);
-
-        // логинимся
-        return given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body(
-                        """
-                                {
-                                  "username": "%s",
-                                  "password": "%s"
-                                }
-                                """
-                                .formatted(username, password))
-                .post("http://localhost:4111/api/v1/auth/login")
-                .then()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .header("Authorization");
-    }
+public class ChangeUserNameNegativeTest extends BaseTest {
 
     @Test
-    public void userCanNotChangeName() {
-        // создаем юзера
-        String username = "usr" + new Random().nextInt(100000);
-        String password = "Rustam12000!";
-        String userToken = createUserAndGetToken(username, password);
+    public void userCannotUpdateNameWithSingleWordTest() {
+        // 1 - Prepare data for user creation
+        String username = RandomData.getUsername();
+        String password = RandomData.getPassword();
 
-        String newUserName = "Rustam";
+        CreateUserRequest createUserRequest =
+                CreateUserRequest.builder()
+                        .username(username)
+                        .password(password)
+                        .role(UserRole.USER.toString())
+                        .build();
 
-        // делаем GET профиля, чтобы получить исходное имя при создании
-        String initialName =
-                given()
-                        .header("Authorization", userToken)
-                        .get("http://localhost:4111/api/v1/customer/profile")
-                        .then()
-                        .statusCode(HttpStatus.SC_OK)
+        // 2 - Create a new user
+        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
+                .post(createUserRequest);
+
+        // 3 - Get customer profile before update
+        GetCustomerProfileResponse initialProfile =
+                new GetCustomerProfileRequester(
+                        RequestSpecs.authAsUser(username, password),
+                        ResponseSpecs.requestReturnsOK())
+                        .get()
                         .extract()
-                        .jsonPath()
-                        .getString("name");
+                        .as(GetCustomerProfileResponse.class);
 
-        // меняем имя у юзера с невалидными данными
-        given()
-                .header("Authorization", userToken)
-                .contentType(ContentType.JSON)
-                .body(
-                        """
-                                {
-                                  "name": "%s"
-                                }
-                                """
-                                .formatted(newUserName))
-                .put("http://localhost:4111/api/v1/customer/profile")
-                .then()
-                .statusCode(HttpStatus.SC_BAD_REQUEST)
-                .body(Matchers.equalTo("Name must contain two words with letters only"));
+        // 4 - Get name from profile
+        String initialName = initialProfile.getName();
 
-        // делаем GET профиля, чтобы получить имя
-        String actualName =
-                given()
-                        .header("Authorization", userToken)
-                        .get("http://localhost:4111/api/v1/customer/profile")
-                        .then()
-                        .statusCode(HttpStatus.SC_OK)
+        // 5 - Prepare invalid name (single word)
+        String invalidName = RandomData.getInvalidNameSingleWord();
+        UpdateCustomerProfileRequest updateRequest =
+                UpdateCustomerProfileRequest.builder().name(invalidName).build();
+
+        // 6 - Try to update profile with invalid name
+        new UpdateCustomerProfileRequester(
+                RequestSpecs.authAsUser(username, password),
+                ResponseSpecs.requestReturnsBadRequestPlainText("Name must contain two words with letters only")
+        ).put(updateRequest);
+
+        // 7 - Get customer profile after update
+        GetCustomerProfileResponse updatedProfile =
+                new GetCustomerProfileRequester(
+                        RequestSpecs.authAsUser(username, password),
+                        ResponseSpecs.requestReturnsOK())
+                        .get()
                         .extract()
-                        .jsonPath()
-                        .getString("name");
+                        .as(GetCustomerProfileResponse.class);
 
-        // проверяем, что имя осталось прежним
-        Assertions.assertEquals(initialName, actualName, "The name should not have changed.");
+        // 8 - Verify name has not changed
+        softly.assertThat(updatedProfile.getName())
+                .as("Name should not have changed after invalid update")
+                .isEqualTo(initialName);
     }
 }

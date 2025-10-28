@@ -10,6 +10,7 @@ import io.restassured.http.ContentType;
 import java.util.List;
 import java.util.Random;
 
+import iteration1.BaseTest;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class DepositMoneyTest {
+public class DepositMoneyTest extends BaseTest {
     @BeforeAll
     public static void setupRestAssured() {
         RestAssured.filters(List.of(new RequestLoggingFilter(), new ResponseLoggingFilter()));

@@ -16,4 +16,8 @@ public class RandomData {
                 + RandomStringUtils.randomNumeric(3).toLowerCase()
                 + "%$#";
     }
+
+    public static String getInvalidNameSingleWord() {
+        return RandomStringUtils.randomAlphabetic(6, 10);
+    }
 }
