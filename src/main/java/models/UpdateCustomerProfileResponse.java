@@ -16,6 +16,8 @@ public class UpdateCustomerProfileResponse {
     private String message;
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class CustomerInfo {
         private long id;
         private String username;

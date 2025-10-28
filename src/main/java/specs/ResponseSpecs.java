@@ -38,4 +38,11 @@ public class ResponseSpecs {
                 .expectBody(Matchers.equalTo(expectedMessage))
                 .build();
     }
+
+    public static ResponseSpecification requestReturnsForbiddenPlainText(String expectedMessage) {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_FORBIDDEN)
+                .expectBody(Matchers.equalTo(expectedMessage))
+                .build();
+    }
 }
