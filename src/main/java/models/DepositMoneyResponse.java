@@ -11,23 +11,11 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class GetCustomerProfileResponse extends BaseModel {
-    private long id;
-    private String username;
-    private String password;
-    private String name;
-    private String role;
-    private List<Account> accounts;
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Account {
-        private int id;
-        private String accountNumber;
-        private double balance;
-        private List<Transaction> transactions;
-    }
+public class DepositMoneyResponse extends BaseModel {
+    private int id;
+    private String accountNumber;
+    private double balance;
+    private List<Transaction> transactions;
 
     @Data
     @AllArgsConstructor

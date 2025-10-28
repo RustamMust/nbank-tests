@@ -1,143 +1,102 @@
 package iteration2;
 
-import static io.restassured.RestAssured.given;
+import generators.RandomData;
 
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import io.restassured.http.ContentType;
-
-import java.util.List;
-import java.util.Random;
-
+import io.restassured.specification.RequestSpecification;
 import iteration1.BaseTest;
-import org.apache.http.HttpStatus;
-import org.hamcrest.Matchers;
+import models.*;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import requests.accounts.CreateAccountRequester;
+import requests.accounts.DepositMoneyRequester;
+import requests.admin.AdminCreateUserRequester;
+import requests.customer.GetCustomerProfileRequester;
+import specs.RequestSpecs;
+import specs.ResponseSpecs;
 
 public class DepositMoneyTest extends BaseTest {
-    @BeforeAll
-    public static void setupRestAssured() {
-        RestAssured.filters(List.of(new RequestLoggingFilter(), new ResponseLoggingFilter()));
-    }
 
     @ParameterizedTest
     @ValueSource(ints = {1, 4999, 5000})
     public void userCanDepositMoneyTest(int depositAmount) {
-        // генерируем уникальный username один раз
-        String username = "usr" + new Random().nextInt(100000);
-        String password = "Rustam12000!";
+        // 1 - Prepare data for user creation
+        String username = RandomData.getUsername();
+        String password = RandomData.getPassword();
 
-        // создание пользователя
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic YWRtaW46YWRtaW4=")
-                .body(
-                        """
-                                {
-                                  "username": "%s",
-                                  "password": "%s",
-                                  "role": "USER"
-                                }"""
-                                .formatted(username, password))
-                .post("http://localhost:4111/api/v1/admin/users")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_CREATED);
+        CreateUserRequest createUserRequest = CreateUserRequest.builder()
+                .username(username)
+                .password(password)
+                .role(UserRole.USER.toString())
+                .build();
 
-        // получаем токен юзера
-        String userAuthHeader =
-                given()
-                        .contentType(ContentType.JSON)
-                        .accept(ContentType.JSON)
-                        .body(
-                                """
-                                        {
-                                          "username": "%s",
-                                          "password": "%s"
-                                        }"""
-                                        .formatted(username, password))
-                        .post("http://localhost:4111/api/v1/auth/login")
-                        .then()
-                        .assertThat()
-                        .statusCode(HttpStatus.SC_OK)
+        // 2 - Create a new user
+        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
+                .post(createUserRequest);
+
+        // 3 - Create an account for the user
+        RequestSpecification userSpec = RequestSpecs.authAsUser(username, password);
+        new CreateAccountRequester(userSpec, ResponseSpecs.entityWasCreated())
+                .post(null);
+
+        // 4 - Get customer profile before deposit
+        GetCustomerProfileResponse customerProfileBefore =
+                new GetCustomerProfileRequester(userSpec, ResponseSpecs.requestReturnsOK())
+                        .get()
                         .extract()
-                        .header("Authorization");
+                        .as(GetCustomerProfileResponse.class);
 
-        // создаем аккаунт (счет)
-        given()
-                .header("Authorization", userAuthHeader)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .post("http://localhost:4111/api/v1/accounts")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_CREATED);
+        // 5 - Extract account info
+        int accountId = customerProfileBefore.getAccounts().get(0).getId();
+        double initialBalance = customerProfileBefore.getAccounts().get(0).getBalance();
 
-        // запрашиваем созданный профиль
-        var profileBefore =
-                given()
-                        .header("Authorization", userAuthHeader)
-                        .accept(ContentType.JSON)
-                        .get("http://localhost:4111/api/v1/customer/profile")
-                        .then()
-                        .statusCode(HttpStatus.SC_OK)
-                        .extract();
-
-        // получаем id аккаунта
-        int accountId = profileBefore.path("accounts[0].id");
-
-        // получаем баланс до депозита
-        float initialBalance = profileBefore.path("accounts[0].balance");
-
-        // убеждаемся, что баланс до депозита 0 (или неотрицательный)
+        // 6 - Assert that initial balance is non-negative
         Assertions.assertTrue(initialBalance >= 0, "Initial balance should be non-negative");
 
-        // делаем депозит
-        given()
-                .header("Authorization", userAuthHeader)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body(
-                        """
-                                {
-                                  "id": %d,
-                                  "balance": %d
-                                }
-                                """
-                                .formatted(accountId, depositAmount))
-                .post("http://localhost:4111/api/v1/accounts/deposit")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .body("balance", Matchers.equalTo(initialBalance + depositAmount))
-                .body("transactions", Matchers.notNullValue())
-                .body("transactions.size()", Matchers.greaterThan(0))
-                .body("transactions[0].amount", Matchers.equalTo((float) depositAmount))
-                .body("transactions[0].type", Matchers.equalTo("DEPOSIT"));
+        // 7 - Prepare deposit request
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
+                .id(accountId)
+                .balance(depositAmount)
+                .build();
 
-        // получаем профиль после депозита
-        var profileAfter =
-                given()
-                        .header("Authorization", userAuthHeader)
-                        .accept(ContentType.JSON)
-                        .get("http://localhost:4111/api/v1/customer/profile")
-                        .then()
-                        .statusCode(HttpStatus.SC_OK)
-                        .extract();
+        // 8 - Perform deposit and deserialize response
+        DepositMoneyResponse depositResponse =
+                new DepositMoneyRequester(userSpec, ResponseSpecs.requestReturnsOK())
+                        .post(depositRequest)
+                        .extract()
+                        .as(DepositMoneyResponse.class);
 
-        // получаем баланс после депозита
-        float finalBalance = profileAfter.path("accounts[0].balance");
+        // 9 - Assert deposit response
+        Assertions.assertEquals(
+                initialBalance + depositAmount,
+                depositResponse.getBalance(),
+                0.001,
+                "Balance should increase by deposit amount"
+        );
 
-        // проверяем, что баланс увеличился на сумму депозита
+        Assertions.assertNotNull(depositResponse.getTransactions(), "Transactions list should not be null");
+        Assertions.assertFalse(depositResponse.getTransactions().isEmpty(), "Transactions list should not be empty");
+
+        DepositMoneyResponse.Transaction lastTransaction =
+                depositResponse.getTransactions().get(depositResponse.getTransactions().size() - 1);
+
+        Assertions.assertEquals(depositAmount, lastTransaction.getAmount(), 0.001, "Transaction amount mismatch");
+        Assertions.assertEquals("DEPOSIT", lastTransaction.getType(), "Transaction type should be DEPOSIT");
+
+        // 10 - Verify balance from profile after deposit
+        GetCustomerProfileResponse customerProfileAfter =
+                new GetCustomerProfileRequester(userSpec, ResponseSpecs.requestReturnsOK())
+                        .get()
+                        .extract()
+                        .as(GetCustomerProfileResponse.class);
+
+        double finalBalance = customerProfileAfter.getAccounts().get(0).getBalance();
+
         Assertions.assertEquals(
                 initialBalance + depositAmount,
                 finalBalance,
                 0.001,
-                "Balance after deposit should increase by deposit amount");
+                "Balance after deposit should match the expected value"
+        );
     }
 }
