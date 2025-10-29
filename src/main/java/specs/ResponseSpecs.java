@@ -45,4 +45,11 @@ public class ResponseSpecs {
                 .expectBody(Matchers.equalTo(expectedMessage))
                 .build();
     }
+
+    public static ResponseSpecification requestReturnsOKWithMessage(String expectedMessage) {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_OK)
+                .expectBody("message", Matchers.equalTo(expectedMessage))
+                .build();
+    }
 }
