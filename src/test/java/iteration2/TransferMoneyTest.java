@@ -2,7 +2,6 @@ package iteration2;
 
 import generators.RandomData;
 import models.*;
-import org.junit.jupiter.api.Assertions;
 import requests.accounts.CreateAccountRequester;
 import requests.accounts.DepositMoneyRequester;
 import requests.accounts.TransferMoneyRequester;
@@ -10,6 +9,8 @@ import requests.admin.AdminCreateUserRequester;
 import requests.customer.GetCustomerProfileRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
+
+import static org.assertj.core.api.Assertions.within;
 
 import iteration1.BaseTest;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -128,18 +129,12 @@ public class TransferMoneyTest extends BaseTest {
         double receiverBalanceAfter = receiverAfter.getAccounts().get(0).getBalance();
 
         // 20 - Assert that balances have changed
-        Assertions.assertEquals(
-                senderBalanceBefore - transferAmount,
-                senderBalanceAfter,
-                0.001,
-                "Sender balance should decrease by transfer amount"
-        );
+        softly.assertThat(senderBalanceAfter)
+                .as("Sender balance should decrease by transfer amount")
+                .isEqualTo(senderBalanceBefore - transferAmount, within(0.001));
 
-        Assertions.assertEquals(
-                receiverBalanceBefore + transferAmount,
-                receiverBalanceAfter,
-                0.001,
-                "Receiver balance should increase by transfer amount"
-        );
+        softly.assertThat(receiverBalanceAfter)
+                .as("Receiver balance should increase by transfer amount")
+                .isEqualTo(receiverBalanceBefore + transferAmount, within(0.001));
     }
 }

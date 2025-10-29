@@ -15,6 +15,8 @@ import requests.customer.GetCustomerProfileRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
+import static org.assertj.core.api.Assertions.offset;
+
 public class DepositMoneyTest extends BaseTest {
 
     @ParameterizedTest
@@ -67,36 +69,42 @@ public class DepositMoneyTest extends BaseTest {
                         .as(DepositMoneyResponse.class);
 
         // 9 - Assert deposit response
-        Assertions.assertEquals(
-                initialBalance + depositAmount,
-                depositResponse.getBalance(),
-                0.001,
-                "Balance should increase by deposit amount"
-        );
+        softly.assertThat(depositResponse.getBalance())
+                .as("Balance should increase by deposit amount")
+                .isCloseTo(initialBalance + depositAmount, offset(0.001));
 
-        Assertions.assertNotNull(depositResponse.getTransactions(), "Transactions list should not be null");
-        Assertions.assertFalse(depositResponse.getTransactions().isEmpty(), "Transactions list should not be empty");
+        softly.assertThat(depositResponse.getTransactions())
+                .as("Transactions list should not be null")
+                .isNotNull();
+
+        softly.assertThat(depositResponse.getTransactions())
+                .as("Transactions list should not be empty")
+                .isNotEmpty();
 
         DepositMoneyResponse.Transaction lastTransaction =
                 depositResponse.getTransactions().get(depositResponse.getTransactions().size() - 1);
 
-        Assertions.assertEquals(depositAmount, lastTransaction.getAmount(), 0.001, "Transaction amount mismatch");
-        Assertions.assertEquals("DEPOSIT", lastTransaction.getType(), "Transaction type should be DEPOSIT");
+        softly.assertThat(lastTransaction.getAmount())
+                .as("Transaction amount mismatch")
+                .isCloseTo(depositAmount, offset(0.001));
 
-        // 10 - Verify balance from profile after deposit
+        softly.assertThat(lastTransaction.getType())
+                .as("Transaction type should be DEPOSIT")
+                .isEqualTo("DEPOSIT");
+
+        // 10 - Get profile after deposit
         GetCustomerProfileResponse customerProfileAfter =
                 new GetCustomerProfileRequester(userSpec, ResponseSpecs.requestReturnsOK())
                         .get()
                         .extract()
                         .as(GetCustomerProfileResponse.class);
 
+        // 11 - Get balance after deposit
         double finalBalance = customerProfileAfter.getAccounts().get(0).getBalance();
 
-        Assertions.assertEquals(
-                initialBalance + depositAmount,
-                finalBalance,
-                0.001,
-                "Balance after deposit should match the expected value"
-        );
+        // 12 - Assert balance from profile after deposit
+        softly.assertThat(finalBalance)
+                .as("Balance after deposit should match the expected value")
+                .isCloseTo(initialBalance + depositAmount, offset(0.001));
     }
 }

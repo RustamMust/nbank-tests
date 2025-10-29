@@ -4,7 +4,6 @@ import generators.RandomData;
 
 import iteration1.BaseTest;
 import models.*;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import requests.accounts.CreateAccountRequester;
 import requests.accounts.DepositMoneyRequester;
@@ -13,6 +12,8 @@ import requests.admin.AdminCreateUserRequester;
 import requests.customer.GetCustomerProfileRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
+
+import static org.assertj.core.api.Assertions.within;
 
 public class TransferMoneyNegativeTest extends BaseTest {
 
@@ -126,15 +127,13 @@ public class TransferMoneyNegativeTest extends BaseTest {
         double finalReceiverBalance = receiverAfter.getAccounts().get(0).getBalance();
 
         // 20 - Assert that balances have not changed
-        Assertions.assertEquals(
-                initialSenderBalance,
-                finalSenderBalance,
-                "Sender balance should not change after failed transfer");
+        softly.assertThat(finalSenderBalance)
+                .as("Sender balance should not change after failed transfer")
+                .isEqualTo(initialSenderBalance);
 
-        Assertions.assertEquals(
-                initialReceiverBalance,
-                finalReceiverBalance,
-                "Receiver balance should not change after failed transfer");
+        softly.assertThat(finalReceiverBalance)
+                .as("Receiver balance should not change after failed transfer")
+                .isEqualTo(initialReceiverBalance);
     }
 
 
@@ -248,15 +247,13 @@ public class TransferMoneyNegativeTest extends BaseTest {
         double finalReceiverBalance = receiverAfter.getAccounts().get(0).getBalance();
 
         // 20 - Assert that balances have not changed
-        Assertions.assertEquals(
-                initialSenderBalance,
-                finalSenderBalance,
-                "Sender balance should not change after failed transfer");
+        softly.assertThat(finalSenderBalance)
+                .as("Sender balance should not change after failed transfer")
+                .isCloseTo(initialSenderBalance, within(0.0001));
 
-        Assertions.assertEquals(
-                initialReceiverBalance,
-                finalReceiverBalance,
-                "Receiver balance should not change after failed transfer");
+        softly.assertThat(finalReceiverBalance)
+                .as("Receiver balance should not change after failed transfer")
+                .isCloseTo(initialReceiverBalance, within(0.0001));
     }
 
     @Test
@@ -369,14 +366,12 @@ public class TransferMoneyNegativeTest extends BaseTest {
         double finalReceiverBalance = receiverAfter.getAccounts().get(0).getBalance();
 
         // 20 - Assert that balances have not changed
-        Assertions.assertEquals(
-                initialSenderBalance,
-                finalSenderBalance,
-                "Sender balance should not change after failed transfer");
+        softly.assertThat(finalSenderBalance)
+                .as("Sender balance should not change after failed transfer")
+                .isCloseTo(initialSenderBalance, within(0.0001));
 
-        Assertions.assertEquals(
-                initialReceiverBalance,
-                finalReceiverBalance,
-                "Receiver balance should not change after failed transfer");
+        softly.assertThat(finalReceiverBalance)
+                .as("Receiver balance should not change after failed transfer")
+                .isCloseTo(initialReceiverBalance, within(0.0001));
     }
 }

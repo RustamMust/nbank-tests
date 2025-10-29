@@ -8,7 +8,6 @@ import models.CreateUserRequest;
 import models.DepositMoneyRequest;
 import models.GetCustomerProfileResponse;
 import models.UserRole;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -18,6 +17,8 @@ import requests.admin.AdminCreateUserRequester;
 import requests.customer.GetCustomerProfileRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
+
+import static org.assertj.core.api.Assertions.offset;
 
 public class DepositNegativeTests extends BaseTest {
 
@@ -88,12 +89,9 @@ public class DepositNegativeTests extends BaseTest {
         double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
 
         // 11 - Assert that balance remains unchanged
-        Assertions.assertEquals(
-                initialBalance,
-                finalBalance,
-                0.001,
-                "Balance should not change after invalid deposit"
-        );
+        softly.assertThat(finalBalance)
+                .as("Balance should not change after invalid deposit")
+                .isEqualTo(initialBalance, offset(0.001));
     }
 
     /**
@@ -163,12 +161,9 @@ public class DepositNegativeTests extends BaseTest {
         double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
 
         // 11 - Assert that balance remains unchanged
-        Assertions.assertEquals(
-                initialBalance,
-                finalBalance,
-                0.001,
-                "Balance should not change after invalid deposit"
-        );
+        softly.assertThat(finalBalance)
+                .as("Balance should not change after invalid deposit")
+                .isEqualTo(initialBalance, offset(0.001));
     }
 
     /**
@@ -241,12 +236,9 @@ public class DepositNegativeTests extends BaseTest {
         double finalBalance = user1ProfileAfter.getAccounts().get(0).getBalance();
 
         // 8 - Assert that balance remains unchanged
-        Assertions.assertEquals(
-                initialBalance,
-                finalBalance,
-                0.001,
-                "Balance should not change after unauthorized deposit"
-        );
+        softly.assertThat(finalBalance)
+                .as("Balance should not change after unauthorized deposit")
+                .isEqualTo(initialBalance, offset(0.001));
     }
 
     /**
@@ -304,11 +296,8 @@ public class DepositNegativeTests extends BaseTest {
         double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
 
         // 8 - Assert balance unchanged
-        Assertions.assertEquals(
-                initialBalance,
-                finalBalance,
-                0.001,
-                "Balance should not change after trying to deposit to non-existing account"
-        );
+        softly.assertThat(finalBalance)
+                .as("Balance should not change after trying to deposit to non-existing account")
+                .isEqualTo(initialBalance, offset(0.001));
     }
 }
