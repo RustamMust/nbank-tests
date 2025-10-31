@@ -341,7 +341,7 @@ public class TransferMoneyNegativeTest extends BaseTest {
         TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
                 .senderAccountId(senderAccountId)
                 .receiverAccountId(receiverAccountId)
-                .amount(10001)
+                .amount(10000.01)
                 .build();
 
         // 16 - Attempt to transfer amount greater than limit

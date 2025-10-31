@@ -19,8 +19,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 public class TransferMoneyTest extends BaseTest {
 
     @ParameterizedTest
-    @ValueSource(ints = {1, 9999, 10000})
-    public void userCanTransferMoneyTest(int transferAmount) {
+    @ValueSource(doubles = {0.01, 9999.99, 10000.00})
+    public void userCanTransferMoneyTest(double transferAmount) {
         // 1 - Prepare sender data
         String senderUsername = RandomData.getUsername();
         String password = RandomData.getPassword();
