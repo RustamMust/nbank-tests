@@ -1,6 +1,7 @@
 package generators;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class RandomData {
     private RandomData() {
@@ -23,5 +24,9 @@ public class RandomData {
 
     public static String getValidName() {
         return RandomStringUtils.randomAlphabetic(5, 8) + " " + RandomStringUtils.randomAlphabetic(5, 8);
+    }
+
+    public static int getRandomBalance() {
+        return ThreadLocalRandom.current().nextInt(1, 5000);
     }
 }

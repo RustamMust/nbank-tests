@@ -49,9 +49,10 @@ public class TransferMoneyNegativeTest extends BaseTest {
         int senderAccountId = senderProfile.getAccounts().get(0).getId();
 
         // 6 - Prepare data to make deposit for sender
+        int randomBalance = RandomData.getRandomBalance();
         DepositMoneyRequest depositToSender = DepositMoneyRequest.builder()
                 .id(senderAccountId)
-                .balance(1000)
+                .balance(randomBalance)
                 .build();
 
         // 7 - Make deposit for sender
@@ -99,13 +100,13 @@ public class TransferMoneyNegativeTest extends BaseTest {
         TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
                 .senderAccountId(senderAccountId)
                 .receiverAccountId(receiverAccountId)
-                .amount(10001)
+                .amount(-1)
                 .build();
 
         // 16 - Attempt to transfer amount greater than limit
         new TransferMoneyRequester(
                 senderSpec,
-                ResponseSpecs.requestReturnsBadRequestPlainText("Transfer amount cannot exceed 10000")
+                ResponseSpecs.requestReturnsBadRequestPlainText("Transfer amount must be at least 0.01")
         ).post(transferRequest);
 
         // 17 - Get sender profile after transfer
@@ -169,9 +170,10 @@ public class TransferMoneyNegativeTest extends BaseTest {
         int senderAccountId = senderProfile.getAccounts().get(0).getId();
 
         // 6 - Prepare data to make deposit for sender
+        int randomBalance = RandomData.getRandomBalance();
         DepositMoneyRequest depositToSender = DepositMoneyRequest.builder()
                 .id(senderAccountId)
-                .balance(1000)
+                .balance(randomBalance)
                 .build();
 
         // 7 - Make deposit for sender
@@ -288,9 +290,10 @@ public class TransferMoneyNegativeTest extends BaseTest {
         int senderAccountId = senderProfile.getAccounts().get(0).getId();
 
         // 6 - Prepare data to make deposit for sender
+        int randomBalance = RandomData.getRandomBalance();
         DepositMoneyRequest depositToSender = DepositMoneyRequest.builder()
                 .id(senderAccountId)
-                .balance(15000)
+                .balance(randomBalance)
                 .build();
 
         // 7 - Make deposit for sender
@@ -344,7 +347,7 @@ public class TransferMoneyNegativeTest extends BaseTest {
         // 16 - Attempt to transfer amount greater than limit
         new TransferMoneyRequester(
                 senderSpec,
-                ResponseSpecs.requestReturnsBadRequestPlainText("Deposit amount cannot exceed 10000")
+                ResponseSpecs.requestReturnsBadRequestPlainText("Transfer amount cannot exceed 10000")
         ).post(transferRequest);
 
         // 17 - Get sender profile after transfer

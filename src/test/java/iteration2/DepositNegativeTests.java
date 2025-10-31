@@ -216,9 +216,10 @@ public class DepositNegativeTests extends BaseTest {
         double initialBalance = user1ProfileBefore.getAccounts().get(0).getBalance();
 
         // 5 - Prepare deposit request for another user's account
+        int randomBalance = RandomData.getRandomBalance();
         DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
                 .id(user1AccountId)
-                .balance(1000)
+                .balance(randomBalance)
                 .build();
 
         // 6 - Attempt to deposit into another user's account
@@ -275,9 +276,10 @@ public class DepositNegativeTests extends BaseTest {
 
         // 5 - Prepare invalid deposit for non-existing account
         int nonExistingAccountId = 999999;
+        int randomBalance = RandomData.getRandomBalance();
         DepositMoneyRequest invalidDeposit = DepositMoneyRequest.builder()
                 .id(nonExistingAccountId)
-                .balance(1000)
+                .balance(randomBalance)
                 .build();
 
         // 6 - Try deposit
