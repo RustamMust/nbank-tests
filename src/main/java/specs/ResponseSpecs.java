@@ -31,4 +31,25 @@ public class ResponseSpecs {
                 .expectBody(errorKey, Matchers.equalTo(errorValues))
                 .build();
     }
+
+    public static ResponseSpecification requestReturnsBadRequestPlainText(String expectedMessage) {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_BAD_REQUEST)
+                .expectBody(Matchers.equalTo(expectedMessage))
+                .build();
+    }
+
+    public static ResponseSpecification requestReturnsForbiddenPlainText(String expectedMessage) {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_FORBIDDEN)
+                .expectBody(Matchers.equalTo(expectedMessage))
+                .build();
+    }
+
+    public static ResponseSpecification requestReturnsOKWithMessage(String expectedMessage) {
+        return defaultResponseBuilder()
+                .expectStatusCode(HttpStatus.SC_OK)
+                .expectBody("message", Matchers.equalTo(expectedMessage))
+                .build();
+    }
 }

@@ -19,7 +19,7 @@ import specs.ResponseSpecs;
 public class CreateUserTest extends BaseTest {
 
     @Test
-    public void adminCanCreateUserWithCorrectData() {
+    public void adminCanCreateUserWithCorrectDataTest() {
         // 1 - Prepare data for user creation
         CreateUserRequest createUserRequest =
                 CreateUserRequest.builder()
