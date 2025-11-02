@@ -1,200 +1,140 @@
 package iteration2;
 
-import static io.restassured.RestAssured.given;
+import generators.RandomData;
+import models.*;
+import requests.accounts.CreateAccountRequester;
+import requests.accounts.DepositMoneyRequester;
+import requests.accounts.TransferMoneyRequester;
+import requests.admin.AdminCreateUserRequester;
+import requests.customer.GetCustomerProfileRequester;
+import specs.RequestSpecs;
+import specs.ResponseSpecs;
 
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import io.restassured.http.ContentType;
+import static org.assertj.core.api.Assertions.within;
 
-import java.util.List;
-import java.util.Random;
-
-import org.apache.http.HttpStatus;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import iteration1.BaseTest;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class TransferMoneyTest {
-
-    @BeforeAll
-    public static void setupRestAssured() {
-        RestAssured.filters(List.of(new RequestLoggingFilter(), new ResponseLoggingFilter()));
-    }
-
-    private String createUserAndGetToken(String username, String password) {
-        // создание пользователя
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic YWRtaW46YWRtaW4=")
-                .body(
-                        """
-                                {
-                                  "username": "%s",
-                                  "password": "%s",
-                                  "role": "USER"
-                                }
-                                """
-                                .formatted(username, password))
-                .post("http://localhost:4111/api/v1/admin/users")
-                .then()
-                .statusCode(HttpStatus.SC_CREATED);
-
-        // логин и получение токена
-        return given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body(
-                        """
-                                {
-                                  "username": "%s",
-                                  "password": "%s"
-                                }
-                                """
-                                .formatted(username, password))
-                .post("http://localhost:4111/api/v1/auth/login")
-                .then()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .header("Authorization");
-    }
-
-    private int createAccountAndGetId(String token) {
-        // создаем аккаунт
-        given()
-                .header("Authorization", token)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .post("http://localhost:4111/api/v1/accounts")
-                .then()
-                .statusCode(HttpStatus.SC_CREATED);
-
-        // получаем id аккаунта
-        return given()
-                .header("Authorization", token)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .get("http://localhost:4111/api/v1/customer/profile")
-                .then()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .path("accounts[0].id");
-    }
-
-    private void depositToAccount(String token, int accountId, int amount) {
-        given()
-                .header("Authorization", token)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body(
-                        """
-                                {
-                                  "id": %d,
-                                  "balance": %d
-                                }
-                                """
-                                .formatted(accountId, amount))
-                .post("http://localhost:4111/api/v1/accounts/deposit")
-                .then()
-                .statusCode(HttpStatus.SC_OK);
-    }
+public class TransferMoneyTest extends BaseTest {
 
     @ParameterizedTest
-    @ValueSource(ints = {1, 9999, 10000})
-    public void userCanTransferMoney(int transferAmount) {
-        String password = "Rustam12000!";
+    @ValueSource(doubles = {0.01, 9999.99, 10000.00})
+    public void userCanTransferMoneyTest(double transferAmount) {
+        // 1 - Prepare sender data
+        String senderUsername = RandomData.getUsername();
+        String password = RandomData.getPassword();
 
-        // создаем отправителя
-        String senderUsername = "usr" + new Random().nextInt(100000);
-        String senderToken = createUserAndGetToken(senderUsername, password);
-        int senderAccountId = createAccountAndGetId(senderToken);
+        CreateUserRequest senderUserRequest = CreateUserRequest.builder()
+                .username(senderUsername)
+                .password(password)
+                .role(UserRole.USER.toString())
+                .build();
 
-        // выполняем депозит
-        depositToAccount(senderToken, senderAccountId, transferAmount);
+        // 2 - Create sender
+        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
+                .post(senderUserRequest);
 
-        // создаем получателя
-        String receiverUsername = "usr" + new Random().nextInt(100000);
-        String receiverToken = createUserAndGetToken(receiverUsername, password);
-        int receiverAccountId = createAccountAndGetId(receiverToken);
+        // 3 - Create sender account
+        var senderSpec = RequestSpecs.authAsUser(senderUsername, password);
+        new CreateAccountRequester(senderSpec, ResponseSpecs.entityWasCreated())
+                .post(null);
 
-        // получаем балансы до перевода
-        float senderBalanceBefore =
-                given()
-                        .header("Authorization", senderToken)
-                        .accept(ContentType.JSON)
-                        .get("http://localhost:4111/api/v1/customer/profile")
-                        .then()
-                        .statusCode(HttpStatus.SC_OK)
+        // 4 - Get sender profile
+        GetCustomerProfileResponse senderProfile =
+                new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
+                        .get()
                         .extract()
-                        .path("accounts[0].balance");
+                        .as(GetCustomerProfileResponse.class);
 
-        float receiverBalanceBefore =
-                given()
-                        .header("Authorization", receiverToken)
-                        .accept(ContentType.JSON)
-                        .get("http://localhost:4111/api/v1/customer/profile")
-                        .then()
-                        .statusCode(HttpStatus.SC_OK)
+        // 5 - Get sender account id from profile
+        int senderAccountId = senderProfile.getAccounts().get(0).getId();
+
+        // 6 - Prepare data to deposit to sender account
+        DepositMoneyRequest depositToSender = DepositMoneyRequest.builder()
+                .id(senderAccountId)
+                .balance(transferAmount)
+                .build();
+
+        // 7 - Deposit to sender account
+        new DepositMoneyRequester(senderSpec, ResponseSpecs.requestReturnsOK())
+                .post(depositToSender);
+
+        // 8 - Prepare data to create receiver
+        String receiverUsername = RandomData.getUsername();
+        CreateUserRequest receiverUserRequest = CreateUserRequest.builder()
+                .username(receiverUsername)
+                .password(password)
+                .role(UserRole.USER.toString())
+                .build();
+
+        // 9 - Create receiver
+        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
+                .post(receiverUserRequest);
+
+        // 10 - Create receiver account
+        var receiverSpec = RequestSpecs.authAsUser(receiverUsername, password);
+        new CreateAccountRequester(receiverSpec, ResponseSpecs.entityWasCreated())
+                .post(null);
+
+        // 11 - Get receiver profile
+        GetCustomerProfileResponse receiverProfile =
+                new GetCustomerProfileRequester(receiverSpec, ResponseSpecs.requestReturnsOK())
+                        .get()
                         .extract()
-                        .path("accounts[0].balance");
+                        .as(GetCustomerProfileResponse.class);
 
-        // перевод
-        given()
-                .header("Authorization", senderToken)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body(
-                        """
-                                {
-                                  "senderAccountId": %d,
-                                  "receiverAccountId": %d,
-                                  "amount": %d
-                                }
-                                """
-                                .formatted(senderAccountId, receiverAccountId, transferAmount))
-                .post("http://localhost:4111/api/v1/accounts/transfer")
-                .then()
-                .statusCode(HttpStatus.SC_OK)
-                .body("message", Matchers.equalTo("Transfer successful"))
-                .body("senderAccountId", Matchers.equalTo(senderAccountId))
-                .body("receiverAccountId", Matchers.equalTo(receiverAccountId))
-                .body("amount", Matchers.equalTo((float) transferAmount));
+        // 12 - Get receiver account id from profile
+        int receiverAccountId = receiverProfile.getAccounts().get(0).getId();
 
-        // получаем балансы после перевода
-        float senderBalanceAfter =
-                given()
-                        .header("Authorization", senderToken)
-                        .accept(ContentType.JSON)
-                        .get("http://localhost:4111/api/v1/customer/profile")
-                        .then()
-                        .statusCode(HttpStatus.SC_OK)
+        // 13 - Refresh sender profile after deposit
+        senderProfile = new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(GetCustomerProfileResponse.class);
+
+        // 14 - Get balances before transfer
+        double senderBalanceBefore = senderProfile.getAccounts().get(0).getBalance();
+        double receiverBalanceBefore = receiverProfile.getAccounts().get(0).getBalance();
+
+        // 15 - Prepare data to perform transfer
+        TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
+                .senderAccountId(senderAccountId)
+                .receiverAccountId(receiverAccountId)
+                .amount(transferAmount)
+                .build();
+
+        // 16 - Perform transfer
+        new TransferMoneyRequester(
+                senderSpec,
+                ResponseSpecs.requestReturnsOKWithMessage("Transfer successful")
+        ).post(transferRequest);
+
+        // 17 - Get sender profile after transfer
+        GetCustomerProfileResponse senderAfter =
+                new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
+                        .get()
                         .extract()
-                        .path("accounts[0].balance");
+                        .as(GetCustomerProfileResponse.class);
 
-        float receiverBalanceAfter =
-                given()
-                        .header("Authorization", receiverToken)
-                        .accept(ContentType.JSON)
-                        .get("http://localhost:4111/api/v1/customer/profile")
-                        .then()
-                        .statusCode(HttpStatus.SC_OK)
+        // 18 - Get receiver profile after transfer
+        GetCustomerProfileResponse receiverAfter =
+                new GetCustomerProfileRequester(receiverSpec, ResponseSpecs.requestReturnsOK())
+                        .get()
                         .extract()
-                        .path("accounts[0].balance");
+                        .as(GetCustomerProfileResponse.class);
 
-        // проверяем изменения балансов
-        Assertions.assertEquals(
-                senderBalanceBefore - transferAmount,
-                senderBalanceAfter,
-                0.001,
-                "Sender balance should decrease by transfer amount");
+        // 19 - Get balances after transfer
+        double senderBalanceAfter = senderAfter.getAccounts().get(0).getBalance();
+        double receiverBalanceAfter = receiverAfter.getAccounts().get(0).getBalance();
 
-        Assertions.assertEquals(
-                receiverBalanceBefore + transferAmount,
-                receiverBalanceAfter,
-                0.001,
-                "Receiver balance should increase by transfer amount");
+        // 20 - Assert that balances have changed
+        softly.assertThat(senderBalanceAfter)
+                .as("Sender balance should decrease by transfer amount")
+                .isEqualTo(senderBalanceBefore - transferAmount, within(0.001));
+
+        softly.assertThat(receiverBalanceAfter)
+                .as("Receiver balance should increase by transfer amount")
+                .isEqualTo(receiverBalanceBefore + transferAmount, within(0.001));
     }
 }
