@@ -90,7 +90,7 @@ public class DepositMoneyTest extends BaseTest {
 
         softly.assertThat(lastTransaction.getType())
                 .as("Transaction type should be DEPOSIT")
-                .isEqualTo("DEPOSIT");
+                .isEqualTo(TransactionType.DEPOSIT.name());
 
         // 10 - Get profile after deposit
         GetCustomerProfileResponse customerProfileAfter =
