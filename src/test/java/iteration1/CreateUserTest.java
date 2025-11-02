@@ -1,18 +1,19 @@
 package iteration1;
 
-import generators.RandomData;
-
 import java.util.List;
 import java.util.stream.Stream;
 
+import generators.RandomModelGenerator;
 import models.CreateUserRequest;
 import models.CreateUserResponse;
-import models.UserRole;
+import models.comparison.ModelAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import requests.admin.AdminCreateUserRequester;
+import requests.skeleton.Endpoint;
+import requests.skeleton.requesters.CrudRequester;
+import requests.skeleton.requesters.ValidatedCrudRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -21,26 +22,17 @@ public class CreateUserTest extends BaseTest {
     @Test
     public void adminCanCreateUserWithCorrectDataTest() {
         // 1 - Prepare data for user creation
-        CreateUserRequest createUserRequest =
-                CreateUserRequest.builder()
-                        .username(RandomData.getUsername())
-                        .password(RandomData.getPassword())
-                        .role(UserRole.USER.toString())
-                        .build();
+        CreateUserRequest createUserRequest = RandomModelGenerator.generate(CreateUserRequest.class);
 
         // 2 - Create a new user
-        CreateUserResponse createUserResponse =
-                new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                        .post(createUserRequest)
-                        .extract()
-                        .as(CreateUserResponse.class);
+        CreateUserResponse createUserResponse = new ValidatedCrudRequester<CreateUserResponse>
+                (RequestSpecs.adminSpec(),
+                        Endpoint.ADMIN_USER,
+                        ResponseSpecs.entityWasCreated())
+                        .post(createUserRequest);
 
         // 3 - Assert body of creation response
-        softly.assertThat(createUserRequest.getUsername()).isEqualTo(createUserResponse.getUsername());
-        softly
-                .assertThat(createUserRequest.getPassword())
-                .isNotEqualTo(createUserResponse.getPassword());
-        softly.assertThat(createUserRequest.getRole()).isEqualTo(createUserResponse.getRole());
+        ModelAssertions.assertThatModels(createUserRequest, createUserResponse).match();
     }
 
     // Prepare invalid user creation data
@@ -79,8 +71,10 @@ public class CreateUserTest extends BaseTest {
                 CreateUserRequest.builder().username(username).password(password).role(role).build();
 
         // 2 - Assert error response after request
-        new AdminCreateUserRequester(
-                RequestSpecs.adminSpec(), ResponseSpecs.requestReturnsBadRequest(errorKey, errorValue))
+        new CrudRequester(
+                RequestSpecs.adminSpec(),
+                Endpoint.ADMIN_USER,
+                ResponseSpecs.requestReturnsBadRequest(errorKey, errorValue))
                 .post(createUserRequest);
     }
 }

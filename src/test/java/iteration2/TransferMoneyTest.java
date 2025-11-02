@@ -2,10 +2,8 @@ package iteration2;
 
 import generators.RandomData;
 import models.*;
-import requests.accounts.CreateAccountRequester;
 import requests.accounts.DepositMoneyRequester;
 import requests.accounts.TransferMoneyRequester;
-import requests.admin.AdminCreateUserRequester;
 import requests.customer.GetCustomerProfileRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;

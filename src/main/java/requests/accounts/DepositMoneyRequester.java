@@ -6,7 +6,6 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
 import models.DepositMoneyRequest;
-import requests.Request;
 
 public class DepositMoneyRequester extends Request<DepositMoneyRequest> {
     public DepositMoneyRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {

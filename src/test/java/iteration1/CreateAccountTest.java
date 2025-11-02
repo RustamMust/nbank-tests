@@ -1,14 +1,13 @@
 package iteration1;
 
-import generators.RandomData;
 import io.restassured.specification.RequestSpecification;
 import models.CreateUserRequest;
-import models.UserRole;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
-import requests.accounts.CreateAccountRequester;
-import requests.admin.AdminCreateUserRequester;
 import requests.customer.GetCustomerProfileRequester;
+import requests.skeleton.Endpoint;
+import requests.skeleton.requesters.CrudRequester;
+import requests.steps.AdminSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -16,22 +15,13 @@ public class CreateAccountTest extends BaseTest {
 
     @Test
     public void userCanCreateAccountTest() {
-        // 1 - Prepare data for user creation
-        CreateUserRequest userRequest =
-                CreateUserRequest.builder()
-                        .username(RandomData.getUsername())
-                        .password(RandomData.getPassword())
-                        .role(UserRole.USER.toString())
-                        .build();
-
-        // 2 - Create a new user
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        CreateUserRequest userRequest = AdminSteps.createUser();
 
         // 3 - Create an account (null because body not needed)
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
-        new CreateAccountRequester(
+        new CrudRequester(
                 requestSpec,
+                Endpoint.ACCOUNTS,
                 ResponseSpecs.entityWasCreated())
                 .post(null);
 

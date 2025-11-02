@@ -3,11 +3,7 @@ package requests.accounts;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
-import models.DepositMoneyRequest;
 import models.TransferMoneyRequest;
-import models.TransferMoneyResponse;
-import requests.Request;
-import specs.ResponseSpecs;
 
 import static io.restassured.RestAssured.given;
 
