@@ -5,7 +5,6 @@ import static io.restassured.RestAssured.given;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
-import requests.Request;
 
 import models.BaseModel;
 

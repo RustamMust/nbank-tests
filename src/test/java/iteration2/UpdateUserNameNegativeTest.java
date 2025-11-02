@@ -7,7 +7,6 @@ import models.GetCustomerProfileResponse;
 import models.UpdateCustomerProfileRequest;
 import models.UserRole;
 import org.junit.jupiter.api.Test;
-import requests.admin.AdminCreateUserRequester;
 import requests.customer.GetCustomerProfileRequester;
 import requests.customer.UpdateCustomerProfileRequester;
 import specs.RequestSpecs;

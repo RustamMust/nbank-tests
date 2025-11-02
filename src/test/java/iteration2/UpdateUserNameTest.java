@@ -4,7 +4,6 @@ import iteration1.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
 import generators.RandomData;
-import requests.admin.AdminCreateUserRequester;
 import requests.customer.GetCustomerProfileRequester;
 import requests.customer.UpdateCustomerProfileRequester;
 import specs.RequestSpecs;
