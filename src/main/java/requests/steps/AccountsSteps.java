@@ -65,4 +65,20 @@ public class AccountsSteps {
                 ResponseSpecs.requestReturnsBadRequestPlainText(expectedErrorMessage)
         ).post(transferRequest);
     }
+
+    public static void depositMoneyExpectingError(RequestSpecification userSpec,
+                                                  int accountId,
+                                                  double amount,
+                                                  String expectedErrorMessage) {
+        DepositMoneyRequest invalidDepositRequest = DepositMoneyRequest.builder()
+                .id(accountId)
+                .balance(amount)
+                .build();
+
+        new CrudRequester(
+                userSpec,
+                Endpoint.DEPOSIT,
+                ResponseSpecs.requestReturnsBadRequestPlainText(expectedErrorMessage)
+        ).post(invalidDepositRequest);
+    }
 }

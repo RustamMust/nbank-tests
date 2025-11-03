@@ -32,40 +32,43 @@ public class TransferMoneyTest extends BaseTest {
         // 3 - Get sender profile before deposit
         GetCustomerProfileResponse senderProfileBefore = CustomerSteps.getCustomerProfile(senderSpec);
 
+        // 4 - Get sender account id from profile
         int senderAccountId = senderProfileBefore.getAccounts().get(0).getId();
 
-        // 4 - Deposit to sender account
+        // 5 - Deposit to sender account
         int randomBalance = RandomData.getRandomBalance();
         AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
 
-        // 5 - Create receiver user
+        // 6 - Create receiver user
         CreateUserRequest receiverUser = AdminSteps.createUser();
 
-        // 6 - Create receiver account
+        // 7 - Create receiver account
         var receiverSpec = RequestSpecs.authAsUser(receiverUser.getUsername(), receiverUser.getPassword());
         AccountsSteps.createAccount(receiverSpec);
 
-        // 7 - Get profiles before transfer
+        // 8 - Get sender and receiver profiles before transfer
         GetCustomerProfileResponse senderProfileBeforeTransfer = CustomerSteps.getCustomerProfile(senderSpec);
-
         GetCustomerProfileResponse receiverProfileBefore = CustomerSteps.getCustomerProfile(receiverSpec);
 
+        // 9 - Get receiver account id
         int receiverAccountId = receiverProfileBefore.getAccounts().get(0).getId();
+
+        // 10 - Get sender and receiver balances
         double senderBalanceBefore = senderProfileBeforeTransfer.getAccounts().get(0).getBalance();
         double receiverBalanceBefore = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 8 - Perform transfer
+        // 11 - Perform transfer
         AccountsSteps.transferMoney(senderSpec, senderAccountId, receiverAccountId, transferAmount);
 
-        // 9 - Get profiles after transfer
+        // 12 - Get sender and receiver profiles after transfer
         GetCustomerProfileResponse senderProfileAfter = CustomerSteps.getCustomerProfile(senderSpec);
-
         GetCustomerProfileResponse receiverProfileAfter = CustomerSteps.getCustomerProfile(receiverSpec);
 
+        // 13 - Get sender and receiver balances
         double senderBalanceAfter = senderProfileAfter.getAccounts().get(0).getBalance();
         double receiverBalanceAfter = receiverProfileAfter.getAccounts().get(0).getBalance();
 
-        // 10 - Assert balances
+        // 14 - Assert balances
         softly.assertThat(senderBalanceAfter)
                 .as("Sender balance should decrease by transfer amount")
                 .isCloseTo(senderBalanceBefore - transferAmount, offset(0.001));

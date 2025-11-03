@@ -5,19 +5,16 @@ import generators.RandomData;
 import iteration1.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
-import requests.skeleton.Endpoint;
-import requests.skeleton.requesters.ValidatedCrudRequester;
 import requests.steps.AdminSteps;
 import requests.steps.AccountsSteps;
 import requests.steps.CustomerSteps;
 import specs.RequestSpecs;
-import specs.ResponseSpecs;
 
 public class TransferMoneyNegativeTest extends BaseTest {
 
     @Test
     public void userCannotTransferNegativeAmountTest() {
-        // 1 - Create sender
+        // 1 - Create sender user
         CreateUserRequest senderUser = AdminSteps.createUser();
 
         // 2 - Create sender account
@@ -31,16 +28,7 @@ public class TransferMoneyNegativeTest extends BaseTest {
 
         // 4 - Deposit some money to sender account
         int randomBalance = RandomData.getRandomBalance();
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(senderAccountId)
-                .balance(randomBalance)
-                .build();
-
-        new ValidatedCrudRequester<DepositMoneyResponse>(
-                senderSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest);
+        AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
 
         // 5 - Create receiver
         CreateUserRequest receiverUser = AdminSteps.createUser();
@@ -91,7 +79,7 @@ public class TransferMoneyNegativeTest extends BaseTest {
 
     @Test
     public void userCannotTransferZeroAmountTest() {
-        // 1 - Create sender
+        // 1 - Create sender user
         CreateUserRequest senderUser = AdminSteps.createUser();
 
         // 2 - Create sender account
@@ -105,16 +93,7 @@ public class TransferMoneyNegativeTest extends BaseTest {
 
         // 4 - Deposit some money to sender account
         int randomBalance = RandomData.getRandomBalance();
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(senderAccountId)
-                .balance(randomBalance)
-                .build();
-
-        new ValidatedCrudRequester<DepositMoneyResponse>(
-                senderSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest);
+        AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
 
         // 5 - Create receiver
         CreateUserRequest receiverUser = AdminSteps.createUser();
@@ -164,7 +143,7 @@ public class TransferMoneyNegativeTest extends BaseTest {
 
     @Test
     public void userCannotTransferMoreThanLimitTest() {
-        // 1 - Create sender
+        // 1 - Create sender user
         CreateUserRequest senderUser = AdminSteps.createUser();
 
         // 2 - Create sender account

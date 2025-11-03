@@ -2,6 +2,7 @@ package iteration1;
 
 import models.CreateUserRequest;
 import models.CreateUserResponse;
+import models.LoginUserRequest;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import requests.skeleton.Endpoint;
@@ -16,7 +17,7 @@ public class LoginUserTest extends BaseTest {
     @Test
     public void adminCanGenerateAuthTokenTest() {
         // 1 - Prepare data for admin user creation
-        models.LoginUserRequest userRequest = models.LoginUserRequest.builder().username("admin").password("admin").build();
+        LoginUserRequest userRequest = models.LoginUserRequest.builder().username("admin").password("admin").build();
 
         // 2 - Login user to get "Authorization" token in response header
         new ValidatedCrudRequester<CreateUserResponse>

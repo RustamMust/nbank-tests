@@ -3,7 +3,6 @@ package iteration2;
 import io.restassured.specification.RequestSpecification;
 import iteration1.BaseTest;
 import models.*;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import requests.skeleton.Endpoint;
@@ -31,17 +30,21 @@ public class DepositMoneyTest extends BaseTest {
         // 3 - Get customer profile before deposit
         GetCustomerProfileResponse customerProfileBefore = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 4 - Extract account info
+        // 4 - Extract account id from profile
         int accountId = customerProfileBefore.getAccounts().get(0).getId();
+
+        // 5 - Extract account balance from profile
         double initialBalance = customerProfileBefore.getAccounts().get(0).getBalance();
 
-        // 5 - Assert that initial balance is non-negative
-        Assertions.assertTrue(initialBalance >= 0, "Initial balance should be non-negative");
+        // 6 - Assert that initial balance is non-negative
+        softly.assertThat(initialBalance)
+                .as("Initial balance should be non-negative")
+                .isGreaterThanOrEqualTo(0);
 
-        // 6 - Perform deposit and deserialize response
+        // 7 - Perform deposit and deserialize response
         DepositMoneyResponse depositResponse = AccountsSteps.depositMoney(requestSpec, accountId, depositAmount);
 
-        // 7 - Assert deposit response
+        // 8 - Assert deposit response
         softly.assertThat(depositResponse.getBalance())
                 .as("Balance should increase by deposit amount")
                 .isCloseTo(initialBalance + depositAmount, offset(0.001));
@@ -54,9 +57,11 @@ public class DepositMoneyTest extends BaseTest {
                 .as("Transactions list should not be empty")
                 .isNotEmpty();
 
+        // 8 - Get transaction from deposit response
         DepositMoneyResponse.Transaction lastTransaction =
                 depositResponse.getTransactions().get(depositResponse.getTransactions().size() - 1);
 
+        // 9 - Assert transaction info
         softly.assertThat(lastTransaction.getAmount())
                 .as("Transaction amount mismatch")
                 .isCloseTo(depositAmount, offset(0.001));
@@ -65,16 +70,16 @@ public class DepositMoneyTest extends BaseTest {
                 .as("Transaction type should be DEPOSIT")
                 .isEqualTo(TransactionType.DEPOSIT.name());
 
-        // 8 - Get profile after deposit
+        // 10 - Get profile after deposit
         GetCustomerProfileResponse customerProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
                 Endpoint.CUSTOMER_PROFILE,
                 ResponseSpecs.requestReturnsOK())
                         .get();
 
-        // 9 - Get balance after deposit
+        // 11 - Get balance after deposit
         double finalBalance = customerProfileAfter.getAccounts().get(0).getBalance();
 
-        // 10 - Assert balance from profile after deposit
+        // 12 - Assert balance from profile after deposit
         softly.assertThat(finalBalance)
                 .as("Balance after deposit should match the expected value")
                 .isCloseTo(initialBalance + depositAmount, offset(0.001));

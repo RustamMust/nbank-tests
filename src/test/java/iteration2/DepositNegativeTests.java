@@ -39,25 +39,21 @@ public class DepositNegativeTests extends BaseTest {
         // 5 - Get balance before deposit
         double initialBalance = customerProfile.getAccounts().get(0).getBalance();
 
-        // 6 - Prepare data for deposit money request
-        DepositMoneyRequest invalidDeposit = DepositMoneyRequest.builder()
-                .id(accountId)
-                .balance(depositAmount)
-                .build();
+        // 6 - Try to make invalid deposit
+        AccountsSteps.depositMoneyExpectingError(
+                requestSpec,
+                accountId,
+                depositAmount,
+                "Deposit amount must be at least 0.01"
+        );
 
-        // 7 - Try to make invalid deposit
-        new CrudRequester(requestSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsBadRequestPlainText("Deposit amount must be at least 0.01"))
-                .post(invalidDeposit);
-
-        // 8 - Get customer profile after deposit
+        // 7 - Get customer profile after deposit
         GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 9 - Get balance after deposit
+        // 8 - Get balance after deposit
         double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
 
-        // 10 - Assert that balance remains unchanged
+        // 9 - Assert that balance remains unchanged
         softly.assertThat(finalBalance)
                 .as("Balance should not change after invalid deposit")
                 .isEqualTo(initialBalance, offset(0.001));
@@ -82,25 +78,21 @@ public class DepositNegativeTests extends BaseTest {
         // 5 - Get balance before deposit
         double initialBalance = customerProfile.getAccounts().get(0).getBalance();
 
-        // 6 - Prepare data for deposit money request
-        DepositMoneyRequest invalidDeposit = DepositMoneyRequest.builder()
-                .id(accountId)
-                .balance(depositAmount)
-                .build();
+        // 6 - Try to make invalid deposit
+        AccountsSteps.depositMoneyExpectingError(
+                requestSpec,
+                accountId,
+                depositAmount,
+                "Deposit amount cannot exceed 5000"
+        );
 
-        // 7 - Try to make invalid deposit
-        new CrudRequester(requestSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsBadRequestPlainText("Deposit amount cannot exceed 5000"))
-                .post(invalidDeposit);
-
-        // 8 - Get customer profile after deposit
+        // 7 - Get customer profile after deposit
         GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 9 - Get balance after deposit
+        // 8 - Get balance after deposit
         double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
 
-        // 10 - Assert that balance remains unchanged
+        // 9 - Assert that balance remains unchanged
         softly.assertThat(finalBalance)
                 .as("Balance should not change after invalid deposit")
                 .isEqualTo(initialBalance, offset(0.001));
