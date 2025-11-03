@@ -6,8 +6,9 @@ import iteration1.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
 import requests.skeleton.Endpoint;
-import requests.skeleton.requesters.ValidatedCrudRequester;
+import requests.skeleton.requesters.CrudRequester;
 import requests.steps.AdminSteps;
+import requests.steps.CustomerSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -20,10 +21,7 @@ public class UpdateUserNameNegativeTest extends BaseTest {
 
         // 2 - Get customer profile before update
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
-        GetCustomerProfileResponse initialProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse initialProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 3 - Get name from profile
         String initialName = initialProfile.getName();
@@ -34,17 +32,14 @@ public class UpdateUserNameNegativeTest extends BaseTest {
                 UpdateCustomerProfileRequest.builder().name(invalidName).build();
 
         // 5 - Try to update profile with invalid name
-        new ValidatedCrudRequester<UpdateCustomerProfileResponse>(
+        new CrudRequester(
                 requestSpec,
                 Endpoint.UPDATE_CUSTOMER_PROFILE,
                 ResponseSpecs.requestReturnsBadRequestPlainText("Name must contain two words with letters only")
         ).put(updateRequest);
 
         // 6 - Get customer profile after update
-        GetCustomerProfileResponse updatedProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 7 - Assert that name has not changed
         softly.assertThat(updatedProfile.getName())

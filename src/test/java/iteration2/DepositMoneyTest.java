@@ -9,7 +9,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import requests.skeleton.Endpoint;
 import requests.skeleton.requesters.ValidatedCrudRequester;
 import requests.steps.AdminSteps;
-import requests.steps.UserSteps;
+import requests.steps.CustomerSteps;
+import requests.steps.AccountsSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -25,13 +26,10 @@ public class DepositMoneyTest extends BaseTest {
 
         // 2 - Create an account
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
-        UserSteps.createAccount(requestSpec);
+        AccountsSteps.createAccount(requestSpec);
 
         // 3 - Get customer profile before deposit
-        GetCustomerProfileResponse customerProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse customerProfileBefore = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 5 - Extract account info
         int accountId = customerProfileBefore.getAccounts().get(0).getId();

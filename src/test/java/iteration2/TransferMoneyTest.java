@@ -4,7 +4,9 @@ import models.*;
 import requests.skeleton.Endpoint;
 import requests.skeleton.requesters.CrudRequester;
 import requests.skeleton.requesters.ValidatedCrudRequester;
+import requests.steps.AccountsSteps;
 import requests.steps.AdminSteps;
+import requests.steps.CustomerSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -24,18 +26,10 @@ public class TransferMoneyTest extends BaseTest {
 
         // 2 - Create sender account
         var senderSpec = RequestSpecs.authAsUser(senderUser.getUsername(), senderUser.getPassword());
-        new CrudRequester(
-                senderSpec,
-                Endpoint.ACCOUNTS,
-                ResponseSpecs.entityWasCreated())
-                .post(null);
+        AccountsSteps.createAccount(senderSpec);
 
         // 3 - Get sender profile before deposit
-        GetCustomerProfileResponse senderProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(
-                senderSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK()
-        ).get();
+        GetCustomerProfileResponse senderProfileBefore = CustomerSteps.getCustomerProfile(senderSpec);
 
         int senderAccountId = senderProfileBefore.getAccounts().get(0).getId();
 
@@ -56,24 +50,12 @@ public class TransferMoneyTest extends BaseTest {
 
         // 6 - Create receiver account
         var receiverSpec = RequestSpecs.authAsUser(receiverUser.getUsername(), receiverUser.getPassword());
-        new CrudRequester(
-                receiverSpec,
-                Endpoint.ACCOUNTS,
-                ResponseSpecs.entityWasCreated())
-                .post(null);
+        AccountsSteps.createAccount(receiverSpec);
 
         // 7 - Get profiles before transfer
-        GetCustomerProfileResponse senderProfileBeforeTransfer = new ValidatedCrudRequester<GetCustomerProfileResponse>(
-                senderSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK()
-        ).get();
+        GetCustomerProfileResponse senderProfileBeforeTransfer = CustomerSteps.getCustomerProfile(senderSpec);
 
-        GetCustomerProfileResponse receiverProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(
-                receiverSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK()
-        ).get();
+        GetCustomerProfileResponse receiverProfileBefore = CustomerSteps.getCustomerProfile(receiverSpec);
 
         int receiverAccountId = receiverProfileBefore.getAccounts().get(0).getId();
         double senderBalanceBefore = senderProfileBeforeTransfer.getAccounts().get(0).getBalance();
@@ -93,17 +75,9 @@ public class TransferMoneyTest extends BaseTest {
         ).post(transferRequest);
 
         // 9 - Get profiles after transfer
-        GetCustomerProfileResponse senderProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(
-                senderSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK()
-        ).get();
+        GetCustomerProfileResponse senderProfileAfter = CustomerSteps.getCustomerProfile(senderSpec);
 
-        GetCustomerProfileResponse receiverProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(
-                receiverSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK()
-        ).get();
+        GetCustomerProfileResponse receiverProfileAfter = CustomerSteps.getCustomerProfile(receiverSpec);
 
         double senderBalanceAfter = senderProfileAfter.getAccounts().get(0).getBalance();
         double receiverBalanceAfter = receiverProfileAfter.getAccounts().get(0).getBalance();

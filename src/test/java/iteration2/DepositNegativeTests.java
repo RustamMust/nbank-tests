@@ -12,7 +12,8 @@ import requests.skeleton.Endpoint;
 import requests.skeleton.requesters.CrudRequester;
 import requests.skeleton.requesters.ValidatedCrudRequester;
 import requests.steps.AdminSteps;
-import requests.steps.UserSteps;
+import requests.steps.CustomerSteps;
+import requests.steps.AccountsSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -28,13 +29,10 @@ public class DepositNegativeTests extends BaseTest {
 
         // 2 - Create an account
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
-        UserSteps.createAccount(requestSpec);
+        AccountsSteps.createAccount(requestSpec);
 
         // 3 - Get customer profile before deposit
-        GetCustomerProfileResponse customerProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse customerProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 4 - Get customer account id from profile
         int accountId = customerProfile.getAccounts().get(0).getId();
@@ -77,13 +75,10 @@ public class DepositNegativeTests extends BaseTest {
 
         // 2 - Create an account
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
-        UserSteps.createAccount(requestSpec);
+        AccountsSteps.createAccount(requestSpec);
 
         // 3 - Get customer profile before deposit
-        GetCustomerProfileResponse customerProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse customerProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 4 - Get customer account id from profile
         int accountId = customerProfile.getAccounts().get(0).getId();
@@ -128,15 +123,11 @@ public class DepositNegativeTests extends BaseTest {
         RequestSpecification user1Spec = RequestSpecs.authAsUser(user1Request.getUsername(), user1Request.getPassword());
         RequestSpecification user2Spec = RequestSpecs.authAsUser(user2Request.getUsername(), user2Request.getPassword());
 
-        UserSteps.createAccount(user1Spec);
-        UserSteps.createAccount(user2Spec);
+        AccountsSteps.createAccount(user1Spec);
+        AccountsSteps.createAccount(user2Spec);
 
         // 3 - Get user1 profile before deposit
-        GetCustomerProfileResponse user1ProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(
-                user1Spec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse user1ProfileBefore = CustomerSteps.getCustomerProfile(user1Spec);
 
         // 4 - Get user1 account id and balance before deposit
         int user1AccountId = user1ProfileBefore.getAccounts().get(0).getId();
@@ -156,11 +147,7 @@ public class DepositNegativeTests extends BaseTest {
                 .post(depositRequest);
 
         // 7 - Get user1 profile after deposit attempt
-        GetCustomerProfileResponse user1ProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(
-                user1Spec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse user1ProfileAfter = CustomerSteps.getCustomerProfile(user1Spec);
 
         // 8 - Verify that balance remains unchanged
         double finalBalance = user1ProfileAfter.getAccounts().get(0).getBalance();
@@ -177,13 +164,10 @@ public class DepositNegativeTests extends BaseTest {
 
         // 2 - Create an account
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
-        UserSteps.createAccount(requestSpec);
+        AccountsSteps.createAccount(requestSpec);
 
         // 3 - Get customer profile before deposit
-        GetCustomerProfileResponse customerProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse customerProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 4 - Get customer balance from profile
         double initialBalance = customerProfile.getAccounts().get(0).getBalance();
@@ -203,10 +187,7 @@ public class DepositNegativeTests extends BaseTest {
                 .post(invalidDeposit);
 
         // 7 - Get profile again
-        GetCustomerProfileResponse updatedProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 8 - Get customer balance from profile
         double finalBalance = updatedProfile.getAccounts().get(0).getBalance();

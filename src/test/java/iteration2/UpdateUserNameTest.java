@@ -8,6 +8,7 @@ import generators.RandomData;
 import requests.skeleton.Endpoint;
 import requests.skeleton.requesters.ValidatedCrudRequester;
 import requests.steps.AdminSteps;
+import requests.steps.CustomerSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -20,10 +21,7 @@ public class UpdateUserNameTest extends BaseTest {
 
         // 2 - Get customer profile before update
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
-        GetCustomerProfileResponse initialProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse initialProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 3 - Get name from profile
         String initialName = initialProfile.getName();
@@ -56,10 +54,7 @@ public class UpdateUserNameTest extends BaseTest {
                 .isEqualTo("Profile updated successfully");
 
         // 10 - Get profile after update
-        GetCustomerProfileResponse updatedProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 11 - Assert that username has not changed
         softly.assertThat(updatedProfile.getUsername())

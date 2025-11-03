@@ -5,7 +5,7 @@ import requests.skeleton.Endpoint;
 import requests.skeleton.requesters.CrudRequester;
 import specs.ResponseSpecs;
 
-public class UserSteps {
+public class AccountsSteps {
     public static void createAccount(RequestSpecification userSpec) {
         new CrudRequester(
                 userSpec,
