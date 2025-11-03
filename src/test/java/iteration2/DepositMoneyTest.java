@@ -31,26 +31,17 @@ public class DepositMoneyTest extends BaseTest {
         // 3 - Get customer profile before deposit
         GetCustomerProfileResponse customerProfileBefore = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 5 - Extract account info
+        // 4 - Extract account info
         int accountId = customerProfileBefore.getAccounts().get(0).getId();
         double initialBalance = customerProfileBefore.getAccounts().get(0).getBalance();
 
-        // 6 - Assert that initial balance is non-negative
+        // 5 - Assert that initial balance is non-negative
         Assertions.assertTrue(initialBalance >= 0, "Initial balance should be non-negative");
 
-        // 7 - Prepare deposit request
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(accountId)
-                .balance(depositAmount)
-                .build();
+        // 6 - Perform deposit and deserialize response
+        DepositMoneyResponse depositResponse = AccountsSteps.depositMoney(requestSpec, accountId, depositAmount);
 
-        // 8 - Perform deposit and deserialize response
-        DepositMoneyResponse depositResponse = new ValidatedCrudRequester<DepositMoneyResponse>(requestSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsOK())
-                        .post(depositRequest);
-
-        // 9 - Assert deposit response
+        // 7 - Assert deposit response
         softly.assertThat(depositResponse.getBalance())
                 .as("Balance should increase by deposit amount")
                 .isCloseTo(initialBalance + depositAmount, offset(0.001));
@@ -74,16 +65,16 @@ public class DepositMoneyTest extends BaseTest {
                 .as("Transaction type should be DEPOSIT")
                 .isEqualTo(TransactionType.DEPOSIT.name());
 
-        // 10 - Get profile after deposit
+        // 8 - Get profile after deposit
         GetCustomerProfileResponse customerProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
                 Endpoint.CUSTOMER_PROFILE,
                 ResponseSpecs.requestReturnsOK())
                         .get();
 
-        // 11 - Get balance after deposit
+        // 9 - Get balance after deposit
         double finalBalance = customerProfileAfter.getAccounts().get(0).getBalance();
 
-        // 12 - Assert balance from profile after deposit
+        // 10 - Assert balance from profile after deposit
         softly.assertThat(finalBalance)
                 .as("Balance after deposit should match the expected value")
                 .isCloseTo(initialBalance + depositAmount, offset(0.001));

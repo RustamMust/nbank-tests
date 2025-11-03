@@ -1,5 +1,6 @@
 package iteration2;
 
+import generators.RandomData;
 import models.*;
 import requests.skeleton.Endpoint;
 import requests.skeleton.requesters.CrudRequester;
@@ -34,16 +35,8 @@ public class TransferMoneyTest extends BaseTest {
         int senderAccountId = senderProfileBefore.getAccounts().get(0).getId();
 
         // 4 - Deposit to sender account
-        DepositMoneyRequest depositToSender = DepositMoneyRequest.builder()
-                .id(senderAccountId)
-                .balance(transferAmount)
-                .build();
-
-        new ValidatedCrudRequester<DepositMoneyResponse>(
-                senderSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsOK()
-        ).post(depositToSender);
+        int randomBalance = RandomData.getRandomBalance();
+        AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
 
         // 5 - Create receiver user
         CreateUserRequest receiverUser = AdminSteps.createUser();
@@ -62,17 +55,7 @@ public class TransferMoneyTest extends BaseTest {
         double receiverBalanceBefore = receiverProfileBefore.getAccounts().get(0).getBalance();
 
         // 8 - Perform transfer
-        TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
-                .senderAccountId(senderAccountId)
-                .receiverAccountId(receiverAccountId)
-                .amount(transferAmount)
-                .build();
-
-        new CrudRequester(
-                senderSpec,
-                Endpoint.TRANSFER,
-                ResponseSpecs.requestReturnsOKWithMessage("Transfer successful")
-        ).post(transferRequest);
+        AccountsSteps.transferMoney(senderSpec, senderAccountId, receiverAccountId, transferAmount);
 
         // 9 - Get profiles after transfer
         GetCustomerProfileResponse senderProfileAfter = CustomerSteps.getCustomerProfile(senderSpec);

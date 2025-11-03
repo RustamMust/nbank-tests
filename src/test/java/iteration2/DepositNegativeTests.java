@@ -10,7 +10,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import requests.skeleton.Endpoint;
 import requests.skeleton.requesters.CrudRequester;
-import requests.skeleton.requesters.ValidatedCrudRequester;
 import requests.steps.AdminSteps;
 import requests.steps.CustomerSteps;
 import requests.steps.AccountsSteps;
@@ -53,10 +52,7 @@ public class DepositNegativeTests extends BaseTest {
                 .post(invalidDeposit);
 
         // 8 - Get customer profile after deposit
-        GetCustomerProfileResponse updatedProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 9 - Get balance after deposit
         double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
@@ -99,10 +95,7 @@ public class DepositNegativeTests extends BaseTest {
                 .post(invalidDeposit);
 
         // 8 - Get customer profile after deposit
-        GetCustomerProfileResponse updatedProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
-                Endpoint.CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsOK())
-                .get();
+        GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
         // 9 - Get balance after deposit
         double finalBalance = updatedProfile.getAccounts().get(0).getBalance();

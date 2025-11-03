@@ -6,7 +6,6 @@ import iteration1.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
 import requests.skeleton.Endpoint;
-import requests.skeleton.requesters.CrudRequester;
 import requests.skeleton.requesters.ValidatedCrudRequester;
 import requests.steps.AdminSteps;
 import requests.steps.AccountsSteps;
@@ -61,21 +60,17 @@ public class TransferMoneyNegativeTest extends BaseTest {
         double initialSenderBalance = senderProfileBefore.getAccounts().get(0).getBalance();
         double initialReceiverBalance = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 9 - Prepare transfer with negative amount
-        TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
-                .senderAccountId(senderAccountId)
-                .receiverAccountId(receiverAccountId)
-                .amount(-1)
-                .build();
-
-        // 10 - Attempt to perform transfer with invalid amount
-        new CrudRequester(
+        // 9 - Attempt to perform transfer with invalid amount
+        double transferAmount = -1;
+        AccountsSteps.transferMoneyExpectingError(
                 senderSpec,
-                Endpoint.TRANSFER,
-                ResponseSpecs.requestReturnsBadRequestPlainText("Transfer amount must be at least 0.01")
-        ).post(transferRequest);
+                senderAccountId,
+                receiverAccountId,
+                transferAmount,
+                "Transfer amount must be at least 0.01"
+        );
 
-        // 11 - Get profiles after failed transfer
+        // 10 - Get profiles after failed transfer
         GetCustomerProfileResponse senderProfileAfter = CustomerSteps.getCustomerProfile(senderSpec);
 
         GetCustomerProfileResponse receiverProfileAfter = CustomerSteps.getCustomerProfile(receiverSpec);
@@ -83,7 +78,7 @@ public class TransferMoneyNegativeTest extends BaseTest {
         double finalSenderBalance = senderProfileAfter.getAccounts().get(0).getBalance();
         double finalReceiverBalance = receiverProfileAfter.getAccounts().get(0).getBalance();
 
-        // 12 - Assert balances did not change
+        // 11 - Assert balances did not change
         softly.assertThat(finalSenderBalance)
                 .as("Sender balance should not change after failed transfer")
                 .isEqualTo(initialSenderBalance);
@@ -139,21 +134,17 @@ public class TransferMoneyNegativeTest extends BaseTest {
         double initialSenderBalance = senderProfileBefore.getAccounts().get(0).getBalance();
         double initialReceiverBalance = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 9 - Prepare transfer with zero amount
-        TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
-                .senderAccountId(senderAccountId)
-                .receiverAccountId(receiverAccountId)
-                .amount(0)
-                .build();
-
-        // 10 - Attempt to perform transfer with invalid amount
-        new CrudRequester(
+        // 9 - Attempt to perform transfer with invalid amount
+        double transferAmount = 0;
+        AccountsSteps.transferMoneyExpectingError(
                 senderSpec,
-                Endpoint.TRANSFER,
-                ResponseSpecs.requestReturnsBadRequestPlainText("Transfer amount must be at least 0.01")
-        ).post(transferRequest);
+                senderAccountId,
+                receiverAccountId,
+                transferAmount,
+                "Transfer amount must be at least 0.01"
+        );
 
-        // 11 - Get profiles after failed transfer
+        // 10 - Get profiles after failed transfer
         GetCustomerProfileResponse senderProfileAfter = CustomerSteps.getCustomerProfile(senderSpec);
 
         GetCustomerProfileResponse receiverProfileAfter = CustomerSteps.getCustomerProfile(receiverSpec);
@@ -161,7 +152,7 @@ public class TransferMoneyNegativeTest extends BaseTest {
         double finalSenderBalance = senderProfileAfter.getAccounts().get(0).getBalance();
         double finalReceiverBalance = receiverProfileAfter.getAccounts().get(0).getBalance();
 
-        // 12 - Assert balances did not change
+        // 11 - Assert balances did not change
         softly.assertThat(finalSenderBalance)
                 .as("Sender balance should not change after failed transfer")
                 .isEqualTo(initialSenderBalance);
@@ -187,16 +178,7 @@ public class TransferMoneyNegativeTest extends BaseTest {
 
         // 4 - Deposit some money to sender account
         int randomBalance = RandomData.getRandomBalance();
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(senderAccountId)
-                .balance(randomBalance)
-                .build();
-
-        new ValidatedCrudRequester<DepositMoneyResponse>(
-                senderSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest);
+        AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
 
         // 5 - Create receiver
         CreateUserRequest receiverUser = AdminSteps.createUser();
@@ -216,19 +198,15 @@ public class TransferMoneyNegativeTest extends BaseTest {
         double initialSenderBalance = senderProfileBefore.getAccounts().get(0).getBalance();
         double initialReceiverBalance = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 9 - Prepare transfer with amount greater than allowed limit
-        TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
-                .senderAccountId(senderAccountId)
-                .receiverAccountId(receiverAccountId)
-                .amount(10000.01)
-                .build();
-
         // 10 - Attempt to perform transfer exceeding the limit
-        new CrudRequester(
+        double transferAmount = 10000.01;
+        AccountsSteps.transferMoneyExpectingError(
                 senderSpec,
-                Endpoint.TRANSFER,
-                ResponseSpecs.requestReturnsBadRequestPlainText("Transfer amount cannot exceed 10000")
-        ).post(transferRequest);
+                senderAccountId,
+                receiverAccountId,
+                transferAmount,
+                "Transfer amount cannot exceed 10000"
+        );
 
         // 11 - Get profiles after failed transfer
         GetCustomerProfileResponse senderProfileAfter = CustomerSteps.getCustomerProfile(senderSpec);
