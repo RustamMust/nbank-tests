@@ -1,14 +1,13 @@
 package iteration2;
 
 import generators.RandomData;
+import io.restassured.specification.RequestSpecification;
 import iteration1.BaseTest;
-import models.CreateUserRequest;
-import models.GetCustomerProfileResponse;
-import models.UpdateCustomerProfileRequest;
-import models.UserRole;
+import models.*;
 import org.junit.jupiter.api.Test;
-import requests.customer.GetCustomerProfileRequester;
-import requests.customer.UpdateCustomerProfileRequester;
+import requests.skeleton.Endpoint;
+import requests.skeleton.requesters.ValidatedCrudRequester;
+import requests.steps.AdminSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -16,54 +15,38 @@ public class UpdateUserNameNegativeTest extends BaseTest {
 
     @Test
     public void userCannotUpdateNameWithSingleWordTest() {
-        // 1 - Prepare data for user creation
-        String username = RandomData.getUsername();
-        String password = RandomData.getPassword();
+        // 1 - Create a new user
+        CreateUserRequest userRequest = AdminSteps.createUser();
 
-        CreateUserRequest createUserRequest =
-                CreateUserRequest.builder()
-                        .username(username)
-                        .password(password)
-                        .role(UserRole.USER.toString())
-                        .build();
+        // 2 - Get customer profile before update
+        RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
+        GetCustomerProfileResponse initialProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 2 - Create a new user
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(createUserRequest);
-
-        // 3 - Get customer profile before update
-        GetCustomerProfileResponse initialProfile =
-                new GetCustomerProfileRequester(
-                        RequestSpecs.authAsUser(username, password),
-                        ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
-
-        // 4 - Get name from profile
+        // 3 - Get name from profile
         String initialName = initialProfile.getName();
 
-        // 5 - Prepare invalid name (single word)
+        // 4 - Prepare invalid name (single word)
         String invalidName = RandomData.getInvalidNameSingleWord();
         UpdateCustomerProfileRequest updateRequest =
                 UpdateCustomerProfileRequest.builder().name(invalidName).build();
 
-        // 6 - Try to update profile with invalid name
-        new UpdateCustomerProfileRequester(
-                RequestSpecs.authAsUser(username, password),
+        // 5 - Try to update profile with invalid name
+        new ValidatedCrudRequester<UpdateCustomerProfileResponse>(
+                requestSpec,
+                Endpoint.UPDATE_CUSTOMER_PROFILE,
                 ResponseSpecs.requestReturnsBadRequestPlainText("Name must contain two words with letters only")
         ).put(updateRequest);
 
-        // 7 - Get customer profile after update
-        GetCustomerProfileResponse updatedProfile =
-                new GetCustomerProfileRequester(
-                        RequestSpecs.authAsUser(username, password),
-                        ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        // 6 - Get customer profile after update
+        GetCustomerProfileResponse updatedProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 8 - Assert that name has not changed
+        // 7 - Assert that name has not changed
         softly.assertThat(updatedProfile.getName())
                 .as("Name should not have changed after invalid update")
                 .isEqualTo(initialName);

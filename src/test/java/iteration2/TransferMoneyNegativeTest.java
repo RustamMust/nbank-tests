@@ -5,127 +5,104 @@ import generators.RandomData;
 import iteration1.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
-import requests.accounts.DepositMoneyRequester;
-import requests.accounts.TransferMoneyRequester;
-import requests.customer.GetCustomerProfileRequester;
+import requests.skeleton.Endpoint;
+import requests.skeleton.requesters.CrudRequester;
+import requests.skeleton.requesters.ValidatedCrudRequester;
+import requests.steps.AdminSteps;
+import requests.steps.UserSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
-
-import static org.assertj.core.api.Assertions.within;
 
 public class TransferMoneyNegativeTest extends BaseTest {
 
     @Test
     public void userCannotTransferNegativeAmountTest() {
-        // 1 - Prepare data to create sender
-        String senderUsername = RandomData.getUsername();
-        String password = RandomData.getPassword();
+        // 1 - Create sender
+        CreateUserRequest senderUser = AdminSteps.createUser();
 
-        CreateUserRequest senderUserRequest = CreateUserRequest.builder()
-                .username(senderUsername)
-                .password(password)
-                .role(UserRole.USER.toString())
-                .build();
+        // 2 - Create sender account
+        var senderSpec = RequestSpecs.authAsUser(senderUser.getUsername(), senderUser.getPassword());
+        UserSteps.createAccount(senderSpec);
 
-        // 2 - Create sender
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(senderUserRequest);
+        // 3 - Get sender profile before deposit
+        GetCustomerProfileResponse senderProfileBeforeDeposit = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                senderSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 3 - Create sender account
-        var senderSpec = RequestSpecs.authAsUser(senderUsername, password);
-        new CreateAccountRequester(senderSpec, ResponseSpecs.entityWasCreated())
-                .post(null);
+        int senderAccountId = senderProfileBeforeDeposit.getAccounts().get(0).getId();
 
-        // 4 - Get sender profile
-        GetCustomerProfileResponse senderProfile =
-                new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
-
-        // 5 - Get sender account id from profile
-        int senderAccountId = senderProfile.getAccounts().get(0).getId();
-
-        // 6 - Prepare data to make deposit for sender
+        // 4 - Deposit some money to sender account
         int randomBalance = RandomData.getRandomBalance();
-        DepositMoneyRequest depositToSender = DepositMoneyRequest.builder()
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
                 .id(senderAccountId)
                 .balance(randomBalance)
                 .build();
 
-        // 7 - Make deposit for sender
-        new DepositMoneyRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                .post(depositToSender);
+        new ValidatedCrudRequester<DepositMoneyResponse>(
+                senderSpec,
+                Endpoint.DEPOSIT,
+                ResponseSpecs.requestReturnsOK())
+                .post(depositRequest);
 
-        // 8 - Prepare data to create receiver
-        String receiverUsername = RandomData.getUsername();
-        CreateUserRequest receiverUserRequest = CreateUserRequest.builder()
-                .username(receiverUsername)
-                .password(password)
-                .role(UserRole.USER.toString())
-                .build();
+        // 5 - Create receiver
+        CreateUserRequest receiverUser = AdminSteps.createUser();
 
-        // 9 - Create receiver
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(receiverUserRequest);
+        // 6 - Create receiver account
+        var receiverSpec = RequestSpecs.authAsUser(receiverUser.getUsername(), receiverUser.getPassword());
+        UserSteps.createAccount(receiverSpec);
 
-        // 10 - Create receiver account
-        var receiverSpec = RequestSpecs.authAsUser(receiverUsername, password);
-        new CreateAccountRequester(receiverSpec, ResponseSpecs.entityWasCreated())
-                .post(null);
+        // 7 - Get receiver profile before transfer
+        GetCustomerProfileResponse receiverProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                receiverSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 11 - Get receiver profile
-        GetCustomerProfileResponse receiverProfile =
-                new GetCustomerProfileRequester(receiverSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        int receiverAccountId = receiverProfileBefore.getAccounts().get(0).getId();
 
-        // 12 - Get receiver account id from profile
-        int receiverAccountId = receiverProfile.getAccounts().get(0).getId();
+        // 8 - Get updated sender profile before transfer
+        GetCustomerProfileResponse senderProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                senderSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 13 - Refresh sender profile to get updated balance
-        senderProfile = new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                .get()
-                .extract()
-                .as(GetCustomerProfileResponse.class);
+        double initialSenderBalance = senderProfileBefore.getAccounts().get(0).getBalance();
+        double initialReceiverBalance = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 14 - Get balances before transfer
-        double initialSenderBalance = senderProfile.getAccounts().get(0).getBalance();
-        double initialReceiverBalance = receiverProfile.getAccounts().get(0).getBalance();
-
-        // 15 - Prepare data to transfer amount greater than limit
+        // 9 - Prepare transfer with negative amount
         TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
                 .senderAccountId(senderAccountId)
                 .receiverAccountId(receiverAccountId)
                 .amount(-1)
                 .build();
 
-        // 16 - Attempt to transfer amount greater than limit
-        new TransferMoneyRequester(
+        // 10 - Attempt to perform transfer with invalid amount
+        new CrudRequester(
                 senderSpec,
+                Endpoint.TRANSFER,
                 ResponseSpecs.requestReturnsBadRequestPlainText("Transfer amount must be at least 0.01")
         ).post(transferRequest);
 
-        // 17 - Get sender profile after transfer
-        GetCustomerProfileResponse senderAfter =
-                new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        // 11 - Get profiles after failed transfer
+        GetCustomerProfileResponse senderProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                senderSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 18 - Get receiver profile after transfer
-        GetCustomerProfileResponse receiverAfter =
-                new GetCustomerProfileRequester(receiverSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        GetCustomerProfileResponse receiverProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                receiverSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 19 - Get balances after transfer
-        double finalSenderBalance = senderAfter.getAccounts().get(0).getBalance();
-        double finalReceiverBalance = receiverAfter.getAccounts().get(0).getBalance();
+        double finalSenderBalance = senderProfileAfter.getAccounts().get(0).getBalance();
+        double finalReceiverBalance = receiverProfileAfter.getAccounts().get(0).getBalance();
 
-        // 20 - Assert that balances have not changed
+        // 12 - Assert balances did not change
         softly.assertThat(finalSenderBalance)
                 .as("Sender balance should not change after failed transfer")
                 .isEqualTo(initialSenderBalance);
@@ -138,241 +115,195 @@ public class TransferMoneyNegativeTest extends BaseTest {
 
     @Test
     public void userCannotTransferZeroAmountTest() {
-        // 1 - Prepare data to create sender
-        String senderUsername = RandomData.getUsername();
-        String password = RandomData.getPassword();
+        // 1 - Create sender
+        CreateUserRequest senderUser = AdminSteps.createUser();
 
-        CreateUserRequest senderUserRequest = CreateUserRequest.builder()
-                .username(senderUsername)
-                .password(password)
-                .role(UserRole.USER.toString())
-                .build();
+        // 2 - Create sender account
+        var senderSpec = RequestSpecs.authAsUser(senderUser.getUsername(), senderUser.getPassword());
+        UserSteps.createAccount(senderSpec);
 
-        // 2 - Create sender
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(senderUserRequest);
+        // 3 - Get sender profile before deposit
+        GetCustomerProfileResponse senderProfileBeforeDeposit = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                senderSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 3 - Create sender account
-        var senderSpec = RequestSpecs.authAsUser(senderUsername, password);
-        new CreateAccountRequester(senderSpec, ResponseSpecs.entityWasCreated())
-                .post(null);
+        int senderAccountId = senderProfileBeforeDeposit.getAccounts().get(0).getId();
 
-        // 4 - Create sender profile
-        GetCustomerProfileResponse senderProfile =
-                new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
-
-        // 5 - Create sender account id from profile
-        int senderAccountId = senderProfile.getAccounts().get(0).getId();
-
-        // 6 - Prepare data to make deposit for sender
+        // 4 - Deposit some money to sender account
         int randomBalance = RandomData.getRandomBalance();
-        DepositMoneyRequest depositToSender = DepositMoneyRequest.builder()
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
                 .id(senderAccountId)
                 .balance(randomBalance)
                 .build();
 
-        // 7 - Make deposit for sender
-        new DepositMoneyRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                .post(depositToSender);
+        new ValidatedCrudRequester<DepositMoneyResponse>(
+                senderSpec,
+                Endpoint.DEPOSIT,
+                ResponseSpecs.requestReturnsOK())
+                .post(depositRequest);
 
-        // 8 - Prepare data to create receiver
-        String receiverUsername = RandomData.getUsername();
-        CreateUserRequest receiverUserRequest = CreateUserRequest.builder()
-                .username(receiverUsername)
-                .password(password)
-                .role(UserRole.USER.toString())
-                .build();
+        // 5 - Create receiver
+        CreateUserRequest receiverUser = AdminSteps.createUser();
 
-        // 9 - Create receiver
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(receiverUserRequest);
+        // 6 - Create receiver account
+        var receiverSpec = RequestSpecs.authAsUser(receiverUser.getUsername(), receiverUser.getPassword());
+        UserSteps.createAccount(receiverSpec);
 
-        // 10 - Create receiver account
-        var receiverSpec = RequestSpecs.authAsUser(receiverUsername, password);
-        new CreateAccountRequester(receiverSpec, ResponseSpecs.entityWasCreated())
-                .post(null);
+        // 7 - Get receiver profile before transfer
+        GetCustomerProfileResponse receiverProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                receiverSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 11 - Get receiver profile
-        GetCustomerProfileResponse receiverProfile =
-                new GetCustomerProfileRequester(receiverSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        int receiverAccountId = receiverProfileBefore.getAccounts().get(0).getId();
 
-        // 12 - Get receiver account id from profile
-        int receiverAccountId = receiverProfile.getAccounts().get(0).getId();
+        // 8 - Get updated sender profile before transfer
+        GetCustomerProfileResponse senderProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                senderSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 13 - Refresh sender profile to get updated balance
-        senderProfile = new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                .get()
-                .extract()
-                .as(GetCustomerProfileResponse.class);
+        double initialSenderBalance = senderProfileBefore.getAccounts().get(0).getBalance();
+        double initialReceiverBalance = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 14 - Get balances before transfer
-        double initialSenderBalance = senderProfile.getAccounts().get(0).getBalance();
-        double initialReceiverBalance = receiverProfile.getAccounts().get(0).getBalance();
-
-        // 15 - Prepare data to transfer zero amount
+        // 9 - Prepare transfer with zero amount
         TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
                 .senderAccountId(senderAccountId)
                 .receiverAccountId(receiverAccountId)
                 .amount(0)
                 .build();
 
-        // 16 - Attempt to transfer zero amount
-        new TransferMoneyRequester(
+        // 10 - Attempt to perform transfer with invalid amount
+        new CrudRequester(
                 senderSpec,
+                Endpoint.TRANSFER,
                 ResponseSpecs.requestReturnsBadRequestPlainText("Transfer amount must be at least 0.01")
         ).post(transferRequest);
 
-        // 17 - Get sender profile after transfer
-        GetCustomerProfileResponse senderAfter =
-                new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        // 11 - Get profiles after failed transfer
+        GetCustomerProfileResponse senderProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                senderSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 18 - Get receiver profile after transfer
-        GetCustomerProfileResponse receiverAfter =
-                new GetCustomerProfileRequester(receiverSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        GetCustomerProfileResponse receiverProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                receiverSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 19 - Get balances after transfer
-        double finalSenderBalance = senderAfter.getAccounts().get(0).getBalance();
-        double finalReceiverBalance = receiverAfter.getAccounts().get(0).getBalance();
+        double finalSenderBalance = senderProfileAfter.getAccounts().get(0).getBalance();
+        double finalReceiverBalance = receiverProfileAfter.getAccounts().get(0).getBalance();
 
-        // 20 - Assert that balances have not changed
+        // 12 - Assert balances did not change
         softly.assertThat(finalSenderBalance)
                 .as("Sender balance should not change after failed transfer")
-                .isCloseTo(initialSenderBalance, within(0.0001));
+                .isEqualTo(initialSenderBalance);
 
         softly.assertThat(finalReceiverBalance)
                 .as("Receiver balance should not change after failed transfer")
-                .isCloseTo(initialReceiverBalance, within(0.0001));
+                .isEqualTo(initialReceiverBalance);
     }
 
     @Test
     public void userCannotTransferMoreThanLimitTest() {
-        // 1 - Prepare data to create sender
-        String senderUsername = RandomData.getUsername();
-        String password = RandomData.getPassword();
+        // 1 - Create sender
+        CreateUserRequest senderUser = AdminSteps.createUser();
 
-        CreateUserRequest senderUserRequest = CreateUserRequest.builder()
-                .username(senderUsername)
-                .password(password)
-                .role(UserRole.USER.toString())
-                .build();
+        // 2 - Create sender account
+        var senderSpec = RequestSpecs.authAsUser(senderUser.getUsername(), senderUser.getPassword());
+        UserSteps.createAccount(senderSpec);
 
-        // 2 - Create sender
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(senderUserRequest);
+        // 3 - Get sender profile before deposit
+        GetCustomerProfileResponse senderProfileBeforeDeposit = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                senderSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 3 - Create sender account
-        var senderSpec = RequestSpecs.authAsUser(senderUsername, password);
-        new CreateAccountRequester(senderSpec, ResponseSpecs.entityWasCreated())
-                .post(null);
+        int senderAccountId = senderProfileBeforeDeposit.getAccounts().get(0).getId();
 
-        // 4 - Get sender profile
-        GetCustomerProfileResponse senderProfile =
-                new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
-
-        // 5 - Get sender account id from profile
-        int senderAccountId = senderProfile.getAccounts().get(0).getId();
-
-        // 6 - Prepare data to make deposit for sender
+        // 4 - Deposit some money to sender account
         int randomBalance = RandomData.getRandomBalance();
-        DepositMoneyRequest depositToSender = DepositMoneyRequest.builder()
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
                 .id(senderAccountId)
                 .balance(randomBalance)
                 .build();
 
-        // 7 - Make deposit for sender
-        new DepositMoneyRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                .post(depositToSender);
+        new ValidatedCrudRequester<DepositMoneyResponse>(
+                senderSpec,
+                Endpoint.DEPOSIT,
+                ResponseSpecs.requestReturnsOK())
+                .post(depositRequest);
 
-        // 8 - Prepare data to create receiver
-        String receiverUsername = RandomData.getUsername();
-        CreateUserRequest receiverUserRequest = CreateUserRequest.builder()
-                .username(receiverUsername)
-                .password(password)
-                .role(UserRole.USER.toString())
-                .build();
+        // 5 - Create receiver
+        CreateUserRequest receiverUser = AdminSteps.createUser();
 
-        // 9 - Create receiver
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(receiverUserRequest);
+        // 6 - Create receiver account
+        var receiverSpec = RequestSpecs.authAsUser(receiverUser.getUsername(), receiverUser.getPassword());
+        UserSteps.createAccount(receiverSpec);
 
-        // 10 - Create receiver account
-        var receiverSpec = RequestSpecs.authAsUser(receiverUsername, password);
-        new CreateAccountRequester(receiverSpec, ResponseSpecs.entityWasCreated())
-                .post(null);
+        // 7 - Get receiver profile before transfer
+        GetCustomerProfileResponse receiverProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                receiverSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 11 - Get receiver profile
-        GetCustomerProfileResponse receiverProfile =
-                new GetCustomerProfileRequester(receiverSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        int receiverAccountId = receiverProfileBefore.getAccounts().get(0).getId();
 
-        // 12 - Get receiver account id from profile
-        int receiverAccountId = receiverProfile.getAccounts().get(0).getId();
+        // 8 - Get updated sender profile before transfer
+        GetCustomerProfileResponse senderProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                senderSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 13 - Refresh sender profile to get updated balance
-        senderProfile = new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                .get()
-                .extract()
-                .as(GetCustomerProfileResponse.class);
+        double initialSenderBalance = senderProfileBefore.getAccounts().get(0).getBalance();
+        double initialReceiverBalance = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 14 - Get balances before transfer
-        double initialSenderBalance = senderProfile.getAccounts().get(0).getBalance();
-        double initialReceiverBalance = receiverProfile.getAccounts().get(0).getBalance();
-
-        // 15 - Prepare data to transfer amount greater than limit
+        // 9 - Prepare transfer with amount greater than allowed limit
         TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
                 .senderAccountId(senderAccountId)
                 .receiverAccountId(receiverAccountId)
                 .amount(10000.01)
                 .build();
 
-        // 16 - Attempt to transfer amount greater than limit
-        new TransferMoneyRequester(
+        // 10 - Attempt to perform transfer exceeding the limit
+        new CrudRequester(
                 senderSpec,
+                Endpoint.TRANSFER,
                 ResponseSpecs.requestReturnsBadRequestPlainText("Transfer amount cannot exceed 10000")
         ).post(transferRequest);
 
-        // 17 - Get sender profile after transfer
-        GetCustomerProfileResponse senderAfter =
-                new GetCustomerProfileRequester(senderSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        // 11 - Get profiles after failed transfer
+        GetCustomerProfileResponse senderProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                senderSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 18 - Get receiver profile after transfer
-        GetCustomerProfileResponse receiverAfter =
-                new GetCustomerProfileRequester(receiverSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        GetCustomerProfileResponse receiverProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(
+                receiverSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 19 - Get balances after transfer
-        double finalSenderBalance = senderAfter.getAccounts().get(0).getBalance();
-        double finalReceiverBalance = receiverAfter.getAccounts().get(0).getBalance();
+        double finalSenderBalance = senderProfileAfter.getAccounts().get(0).getBalance();
+        double finalReceiverBalance = receiverProfileAfter.getAccounts().get(0).getBalance();
 
-        // 20 - Assert that balances have not changed
+        // 12 - Assert balances did not change
         softly.assertThat(finalSenderBalance)
-                .as("Sender balance should not change after failed transfer")
-                .isCloseTo(initialSenderBalance, within(0.0001));
+                .as("Sender balance should not change after failed transfer exceeding the limit")
+                .isEqualTo(initialSenderBalance);
 
         softly.assertThat(finalReceiverBalance)
-                .as("Receiver balance should not change after failed transfer")
-                .isCloseTo(initialReceiverBalance, within(0.0001));
+                .as("Receiver balance should not change after failed transfer exceeding the limit")
+                .isEqualTo(initialReceiverBalance);
     }
 }

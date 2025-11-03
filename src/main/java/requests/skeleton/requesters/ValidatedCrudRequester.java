@@ -26,8 +26,13 @@ public class ValidatedCrudRequester<T extends BaseModel>extends HttpRequest impl
     }
 
     @Override
-    public Object update(long id, BaseModel model) {
-        return null;
+    public T get() {
+        return (T) crudRequester.get().extract().as(endpoint.getResponseModel());
+    }
+
+    @Override
+    public T put(BaseModel model) {
+        return (T) crudRequester.put(model).extract().as(endpoint.getResponseModel());
     }
 
     @Override

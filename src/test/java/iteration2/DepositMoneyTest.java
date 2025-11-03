@@ -1,15 +1,15 @@
 package iteration2;
 
-import generators.RandomData;
-
 import io.restassured.specification.RequestSpecification;
 import iteration1.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import requests.accounts.DepositMoneyRequester;
-import requests.customer.GetCustomerProfileRequester;
+import requests.skeleton.Endpoint;
+import requests.skeleton.requesters.ValidatedCrudRequester;
+import requests.steps.AdminSteps;
+import requests.steps.UserSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -20,31 +20,18 @@ public class DepositMoneyTest extends BaseTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 4999, 5000})
     public void userCanDepositMoneyTest(int depositAmount) {
-        // 1 - Prepare data for user creation
-        String username = RandomData.getUsername();
-        String password = RandomData.getPassword();
+        // 1 - Create a new user
+        CreateUserRequest userRequest = AdminSteps.createUser();
 
-        CreateUserRequest createUserRequest = CreateUserRequest.builder()
-                .username(username)
-                .password(password)
-                .role(UserRole.USER.toString())
-                .build();
+        // 2 - Create an account
+        RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
+        UserSteps.createAccount(requestSpec);
 
-        // 2 - Create a new user
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(createUserRequest);
-
-        // 3 - Create an account for the user
-        RequestSpecification userSpec = RequestSpecs.authAsUser(username, password);
-        new CreateAccountRequester(userSpec, ResponseSpecs.entityWasCreated())
-                .post(null);
-
-        // 4 - Get customer profile before deposit
-        GetCustomerProfileResponse customerProfileBefore =
-                new GetCustomerProfileRequester(userSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        // 3 - Get customer profile before deposit
+        GetCustomerProfileResponse customerProfileBefore = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
         // 5 - Extract account info
         int accountId = customerProfileBefore.getAccounts().get(0).getId();
@@ -60,11 +47,10 @@ public class DepositMoneyTest extends BaseTest {
                 .build();
 
         // 8 - Perform deposit and deserialize response
-        DepositMoneyResponse depositResponse =
-                new DepositMoneyRequester(userSpec, ResponseSpecs.requestReturnsOK())
-                        .post(depositRequest)
-                        .extract()
-                        .as(DepositMoneyResponse.class);
+        DepositMoneyResponse depositResponse = new ValidatedCrudRequester<DepositMoneyResponse>(requestSpec,
+                Endpoint.DEPOSIT,
+                ResponseSpecs.requestReturnsOK())
+                        .post(depositRequest);
 
         // 9 - Assert deposit response
         softly.assertThat(depositResponse.getBalance())
@@ -91,11 +77,10 @@ public class DepositMoneyTest extends BaseTest {
                 .isEqualTo(TransactionType.DEPOSIT.name());
 
         // 10 - Get profile after deposit
-        GetCustomerProfileResponse customerProfileAfter =
-                new GetCustomerProfileRequester(userSpec, ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        GetCustomerProfileResponse customerProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                        .get();
 
         // 11 - Get balance after deposit
         double finalBalance = customerProfileAfter.getAccounts().get(0).getBalance();

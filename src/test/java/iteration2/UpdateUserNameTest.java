@@ -1,11 +1,13 @@
 package iteration2;
 
+import io.restassured.specification.RequestSpecification;
 import iteration1.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
 import generators.RandomData;
-import requests.customer.GetCustomerProfileRequester;
-import requests.customer.UpdateCustomerProfileRequester;
+import requests.skeleton.Endpoint;
+import requests.skeleton.requesters.ValidatedCrudRequester;
+import requests.steps.AdminSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -13,53 +15,36 @@ public class UpdateUserNameTest extends BaseTest {
 
     @Test
     public void userCanUpdateNameTest() {
-        // 1 - Prepare data for user creation
-        String username = RandomData.getUsername();
-        String password = RandomData.getPassword();
+        // 1 - Create a new user
+        CreateUserRequest userRequest = AdminSteps.createUser();
 
-        CreateUserRequest createUserRequest =
-                CreateUserRequest.builder()
-                        .username(username)
-                        .password(password)
-                        .role(UserRole.USER.toString())
-                        .build();
+        // 2 - Get customer profile before update
+        RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
+        GetCustomerProfileResponse initialProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
-        // 2 - Create a new user
-        new AdminCreateUserRequester(RequestSpecs.adminSpec(), ResponseSpecs.entityWasCreated())
-                .post(createUserRequest);
-
-        // 3 - Get customer profile before update
-        GetCustomerProfileResponse initialProfile =
-                new GetCustomerProfileRequester(
-                        RequestSpecs.authAsUser(username, password),
-                        ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
-
-        // 4 - Get name from profile
+        // 3 - Get name from profile
         String initialName = initialProfile.getName();
 
-        // 5 - Prepare a new valid name (two words)
+        // 4 - Prepare a new valid name (two words)
         String newUserName = RandomData.getValidName();
 
-        // 6 - Assert new name is different from initial name
+        // 5 - Assert new name is different from initial name
         softly.assertThat(newUserName)
                 .as("New name should differ from initial name")
                 .isNotEqualTo(initialName);
 
-        // 7 - Prepare data for update request
+        // 6 - Prepare data for update request
         UpdateCustomerProfileRequest updateRequest =
                 UpdateCustomerProfileRequest.builder().name(newUserName).build();
 
-        // 8 - Update profile with valid name
-        UpdateCustomerProfileResponse updateResponse =
-                new UpdateCustomerProfileRequester(
-                        RequestSpecs.authAsUser(username, password),
-                        ResponseSpecs.requestReturnsOK())
-                        .put(updateRequest)
-                        .extract()
-                        .as(UpdateCustomerProfileResponse.class);
+        // 7 - Update profile with valid name
+        UpdateCustomerProfileResponse updateResponse = new ValidatedCrudRequester<UpdateCustomerProfileResponse>(requestSpec,
+                Endpoint.UPDATE_CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .put(updateRequest);
 
         // 9 - Assert update response
         softly.assertThat(updateResponse.getCustomer().getName())
@@ -71,18 +56,15 @@ public class UpdateUserNameTest extends BaseTest {
                 .isEqualTo("Profile updated successfully");
 
         // 10 - Get profile after update
-        GetCustomerProfileResponse updatedProfile =
-                new GetCustomerProfileRequester(
-                        RequestSpecs.authAsUser(username, password),
-                        ResponseSpecs.requestReturnsOK())
-                        .get()
-                        .extract()
-                        .as(GetCustomerProfileResponse.class);
+        GetCustomerProfileResponse updatedProfile = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.requestReturnsOK())
+                .get();
 
         // 11 - Assert that username has not changed
         softly.assertThat(updatedProfile.getUsername())
                 .as("Username should remain unchanged")
-                .isEqualTo(username);
+                .isEqualTo(userRequest.getUsername());
 
         // 12 - Assert that name was actually updated in profile
         softly.assertThat(updatedProfile.getName())
