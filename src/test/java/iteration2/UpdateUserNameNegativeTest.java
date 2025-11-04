@@ -1,5 +1,6 @@
 package iteration2;
 
+import assertions.ProfileAssertions;
 import generators.RandomData;
 import io.restassured.specification.RequestSpecification;
 import iteration1.BaseTest;
@@ -20,22 +21,17 @@ public class UpdateUserNameNegativeTest extends BaseTest {
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
         GetCustomerProfileResponse initialProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 3 - Get name from profile
-        String initialName = initialProfile.getName();
-
-        // 4 - Prepare invalid name (single word)
+        // 3 - Prepare invalid name (single word)
         String invalidName = RandomData.getInvalidNameSingleWord();
         CustomerSteps.updateProfileExpectingError(requestSpec,
                 invalidName,
                 "Name must contain two words with letters only"
         );
 
-        // 6 - Get customer profile after update
+        // 4 - Get customer profile after update
         GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 7 - Assert that name has not changed
-        softly.assertThat(updatedProfile.getName())
-                .as("Name should not have changed after invalid update")
-                .isEqualTo(initialName);
+        // 5 - Assert that name has not changed
+        ProfileAssertions.assertNameUnchanged(softly, initialProfile, updatedProfile);
     }
 }

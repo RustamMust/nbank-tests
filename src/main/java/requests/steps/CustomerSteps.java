@@ -43,8 +43,4 @@ public class CustomerSteps {
                 ResponseSpecs.requestReturnsOK()
         ).put(updateRequest);
     }
-
-
-
-
 }

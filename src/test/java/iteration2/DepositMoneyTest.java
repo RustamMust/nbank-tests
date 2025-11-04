@@ -1,5 +1,6 @@
 package iteration2;
 
+import assertions.BalanceAssertions;
 import helpers.AccountStepsHelper;
 import io.restassured.specification.RequestSpecification;
 import iteration1.BaseTest;
@@ -37,10 +38,8 @@ public class DepositMoneyTest extends BaseTest {
         DepositMoneyResponse depositResponse = AccountsSteps.depositMoney(requestSpec, accountId, depositAmount);
 
         // 7 - Assert deposit response
-        softly.assertThat(depositResponse.getBalance())
-                .as("Balance should increase by deposit amount")
-                .isCloseTo(initialBalance + depositAmount, MONEY_TOLERANCE);
-
+        BalanceAssertions.assertBalanceIncreasedBy(softly, initialBalance, depositResponse.getBalance(), depositAmount);
+        
         softly.assertThat(depositResponse.getTransactions())
                 .as("Transactions list should not be null")
                 .isNotNull();
@@ -66,8 +65,6 @@ public class DepositMoneyTest extends BaseTest {
         double finalBalance = AccountStepsHelper.getBalance(requestSpec);
 
         // 11 - Assert balance from profile after deposit
-        softly.assertThat(finalBalance)
-                .as("Balance after deposit should match the expected value")
-                .isCloseTo(initialBalance + depositAmount, MONEY_TOLERANCE);
+        BalanceAssertions.assertBalanceIncreasedBy(softly, initialBalance, finalBalance, depositAmount);
     }
 }

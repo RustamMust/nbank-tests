@@ -14,8 +14,6 @@ import requests.steps.AccountsSteps;
 import requests.steps.AdminSteps;
 import specs.RequestSpecs;
 
-import static org.assertj.core.api.Assertions.offset;
-
 public class DepositNegativeTests extends BaseTest {
 
     @ParameterizedTest
@@ -47,9 +45,7 @@ public class DepositNegativeTests extends BaseTest {
         double finalBalance = AccountStepsHelper.getBalance(requestSpec);
 
         // 7 - Assert that balance remains unchanged
-        softly.assertThat(finalBalance)
-                .as("Balance should not change after invalid deposit")
-                .isEqualTo(initialBalance, offset(0.001));
+        BalanceAssertions.assertBalanceUnchanged(softly, initialBalance, finalBalance);
     }
 
     @ParameterizedTest

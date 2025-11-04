@@ -1,5 +1,6 @@
 package iteration2;
 
+import assertions.BalanceAssertions;
 import generators.RandomData;
 import helpers.AccountStepsHelper;
 import models.*;
@@ -52,12 +53,7 @@ public class TransferMoneyTest extends BaseTest {
         double receiverBalanceAfter = AccountStepsHelper.getBalance(receiverSpec);
 
         // 11 - Assert balances
-        softly.assertThat(senderBalanceAfter)
-                .as("Sender balance should decrease by transfer amount")
-                .isCloseTo(senderBalanceBefore - transferAmount, MONEY_TOLERANCE);
-
-        softly.assertThat(receiverBalanceAfter)
-                .as("Receiver balance should increase by transfer amount")
-                .isCloseTo(receiverBalanceBefore + transferAmount, MONEY_TOLERANCE);
+        BalanceAssertions.assertBalanceDecreasedBy(softly, senderBalanceBefore, senderBalanceAfter, transferAmount);
+        BalanceAssertions.assertBalanceIncreasedBy(softly, receiverBalanceBefore, receiverBalanceAfter, transferAmount);
     }
 }
