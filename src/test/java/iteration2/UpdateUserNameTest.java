@@ -44,7 +44,7 @@ public class UpdateUserNameTest extends BaseTest {
                 ResponseSpecs.requestReturnsOK())
                 .put(updateRequest);
 
-        // 9 - Assert update response
+        // 8 - Assert update response
         softly.assertThat(updateResponse.getCustomer().getName())
                 .as("Response should contain updated name")
                 .isEqualTo(newUserName);
@@ -53,15 +53,15 @@ public class UpdateUserNameTest extends BaseTest {
                 .as("Response should contain success message")
                 .isEqualTo("Profile updated successfully");
 
-        // 10 - Get profile after update
+        // 9 - Get profile after update
         GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 11 - Assert that username has not changed
+        // 10 - Assert that username has not changed
         softly.assertThat(updatedProfile.getUsername())
                 .as("Username should remain unchanged")
                 .isEqualTo(userRequest.getUsername());
 
-        // 12 - Assert that name was actually updated in profile
+        // 11 - Assert that name was actually updated in profile
         softly.assertThat(updatedProfile.getName())
                 .as("Name should be updated to new value")
                 .isEqualTo(newUserName);

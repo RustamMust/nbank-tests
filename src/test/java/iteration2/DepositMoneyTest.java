@@ -41,7 +41,7 @@ public class DepositMoneyTest extends BaseTest {
                 .as("Initial balance should be non-negative")
                 .isGreaterThanOrEqualTo(0);
 
-        // 7 - Perform deposit and deserialize response
+        // 7 - Perform deposit
         DepositMoneyResponse depositResponse = AccountsSteps.depositMoney(requestSpec, accountId, depositAmount);
 
         // 8 - Assert deposit response
@@ -57,11 +57,11 @@ public class DepositMoneyTest extends BaseTest {
                 .as("Transactions list should not be empty")
                 .isNotEmpty();
 
-        // 8 - Get transaction from deposit response
+        // 9 - Get transaction from deposit response
         DepositMoneyResponse.Transaction lastTransaction =
                 depositResponse.getTransactions().get(depositResponse.getTransactions().size() - 1);
 
-        // 9 - Assert transaction info
+        // 10 - Assert transaction info
         softly.assertThat(lastTransaction.getAmount())
                 .as("Transaction amount mismatch")
                 .isCloseTo(depositAmount, offset(0.001));
@@ -70,16 +70,16 @@ public class DepositMoneyTest extends BaseTest {
                 .as("Transaction type should be DEPOSIT")
                 .isEqualTo(TransactionType.DEPOSIT.name());
 
-        // 10 - Get profile after deposit
+        // 11 - Get profile after deposit
         GetCustomerProfileResponse customerProfileAfter = new ValidatedCrudRequester<GetCustomerProfileResponse>(requestSpec,
                 Endpoint.CUSTOMER_PROFILE,
                 ResponseSpecs.requestReturnsOK())
                         .get();
 
-        // 11 - Get balance after deposit
+        // 12 - Get balance after deposit
         double finalBalance = customerProfileAfter.getAccounts().get(0).getBalance();
 
-        // 12 - Assert balance from profile after deposit
+        // 13 - Assert balance from profile after deposit
         softly.assertThat(finalBalance)
                 .as("Balance after deposit should match the expected value")
                 .isCloseTo(initialBalance + depositAmount, offset(0.001));

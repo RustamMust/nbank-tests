@@ -8,13 +8,10 @@ import models.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import requests.skeleton.Endpoint;
-import requests.skeleton.requesters.CrudRequester;
 import requests.steps.AdminSteps;
 import requests.steps.CustomerSteps;
 import requests.steps.AccountsSteps;
 import specs.RequestSpecs;
-import specs.ResponseSpecs;
 
 import static org.assertj.core.api.Assertions.offset;
 
@@ -118,25 +115,22 @@ public class DepositNegativeTests extends BaseTest {
         int user1AccountId = user1ProfileBefore.getAccounts().get(0).getId();
         double initialBalance = user1ProfileBefore.getAccounts().get(0).getBalance();
 
-        // 5 - Prepare deposit request to another user's account
+        // 5 - Attempt to deposit into another user's account
         int randomBalance = RandomData.getRandomBalance();
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(user1AccountId)
-                .balance(randomBalance)
-                .build();
+        AccountsSteps.depositMoneyExpectingForbiddenError(
+                user2Spec,
+                user1AccountId,
+                randomBalance,
+                "Unauthorized access to account"
+        );
 
-        // 6 - Attempt to deposit into another user's account
-        new CrudRequester(user2Spec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsForbiddenPlainText("Unauthorized access to account"))
-                .post(depositRequest);
-
-        // 7 - Get user1 profile after deposit attempt
+        // 6 - Get user1 profile after deposit attempt
         GetCustomerProfileResponse user1ProfileAfter = CustomerSteps.getCustomerProfile(user1Spec);
 
-        // 8 - Verify that balance remains unchanged
+        // 7 - Get balance
         double finalBalance = user1ProfileAfter.getAccounts().get(0).getBalance();
 
+        // 8 - Assert that balance remains unchanged
         softly.assertThat(finalBalance)
                 .as("Balance should not change after unauthorized deposit")
                 .isEqualTo(initialBalance, offset(0.001));
@@ -157,27 +151,23 @@ public class DepositNegativeTests extends BaseTest {
         // 4 - Get customer balance from profile
         double initialBalance = customerProfile.getAccounts().get(0).getBalance();
 
-        // 5 - Prepare invalid deposit for non-existing account
-        int nonExistingAccountId = 999999;
+        // 5 - Try to deposit
+        int nonExistingAccountId = RandomData.getNonExistingAccountId();;
         int randomBalance = RandomData.getRandomBalance();
-        DepositMoneyRequest invalidDeposit = DepositMoneyRequest.builder()
-                .id(nonExistingAccountId)
-                .balance(randomBalance)
-                .build();
+        AccountsSteps.depositMoneyExpectingForbiddenError(
+                requestSpec,
+                nonExistingAccountId,
+                randomBalance,
+                "Unauthorized access to account"
+        );
 
-        // 6 - Try deposit
-        new CrudRequester(requestSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsForbiddenPlainText("Unauthorized access to account"))
-                .post(invalidDeposit);
-
-        // 7 - Get profile again
+        // 6 - Get profile again
         GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 8 - Get customer balance from profile
+        // 7 - Get customer balance from profile
         double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
 
-        // 9 - Assert balance unchanged
+        // 8 - Assert balance unchanged
         softly.assertThat(finalBalance)
                 .as("Balance should not change after trying to deposit to non-existing account")
                 .isEqualTo(initialBalance, offset(0.001));

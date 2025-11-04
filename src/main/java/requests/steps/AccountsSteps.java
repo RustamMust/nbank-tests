@@ -81,4 +81,20 @@ public class AccountsSteps {
                 ResponseSpecs.requestReturnsBadRequestPlainText(expectedErrorMessage)
         ).post(invalidDepositRequest);
     }
+
+    public static void depositMoneyExpectingForbiddenError(RequestSpecification userSpec,
+                                                           int targetAccountId,
+                                                           double amount,
+                                                           String expectedErrorMessage) {
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
+                .id(targetAccountId)
+                .balance(amount)
+                .build();
+
+        new CrudRequester(
+                userSpec,
+                Endpoint.DEPOSIT,
+                ResponseSpecs.requestReturnsForbiddenPlainText(expectedErrorMessage)
+        ).post(depositRequest);
+    }
 }

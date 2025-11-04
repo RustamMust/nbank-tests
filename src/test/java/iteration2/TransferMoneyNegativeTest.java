@@ -24,31 +24,34 @@ public class TransferMoneyNegativeTest extends BaseTest {
         // 3 - Get sender profile before deposit
         GetCustomerProfileResponse senderProfileBeforeDeposit = CustomerSteps.getCustomerProfile(senderSpec);
 
+        // 4 - Get sender account id
         int senderAccountId = senderProfileBeforeDeposit.getAccounts().get(0).getId();
 
-        // 4 - Deposit some money to sender account
+        // 5 - Deposit some money to sender account
         int randomBalance = RandomData.getRandomBalance();
         AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
 
-        // 5 - Create receiver
+        // 6 - Create receiver
         CreateUserRequest receiverUser = AdminSteps.createUser();
 
-        // 6 - Create receiver account
+        // 7 - Create receiver account
         var receiverSpec = RequestSpecs.authAsUser(receiverUser.getUsername(), receiverUser.getPassword());
         AccountsSteps.createAccount(receiverSpec);
 
-        // 7 - Get receiver profile before transfer
+        // 8 - Get receiver profile before transfer
         GetCustomerProfileResponse receiverProfileBefore = CustomerSteps.getCustomerProfile(receiverSpec);
 
+        // 9 - Get receiver account id
         int receiverAccountId = receiverProfileBefore.getAccounts().get(0).getId();
 
-        // 8 - Get updated sender profile before transfer
+        // 10 - Get updated sender profile before transfer
         GetCustomerProfileResponse senderProfileBefore = CustomerSteps.getCustomerProfile(senderSpec);
 
+        // 11 - Get balances
         double initialSenderBalance = senderProfileBefore.getAccounts().get(0).getBalance();
         double initialReceiverBalance = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 9 - Attempt to perform transfer with invalid amount
+        // 12 - Attempt to perform transfer with invalid amount
         double transferAmount = -1;
         AccountsSteps.transferMoneyExpectingError(
                 senderSpec,
@@ -58,15 +61,15 @@ public class TransferMoneyNegativeTest extends BaseTest {
                 "Transfer amount must be at least 0.01"
         );
 
-        // 10 - Get profiles after failed transfer
+        // 13 - Get profiles after failed transfer
         GetCustomerProfileResponse senderProfileAfter = CustomerSteps.getCustomerProfile(senderSpec);
-
         GetCustomerProfileResponse receiverProfileAfter = CustomerSteps.getCustomerProfile(receiverSpec);
 
+        // 14 - Get balances
         double finalSenderBalance = senderProfileAfter.getAccounts().get(0).getBalance();
         double finalReceiverBalance = receiverProfileAfter.getAccounts().get(0).getBalance();
 
-        // 11 - Assert balances did not change
+        // 15 - Assert balances did not change
         softly.assertThat(finalSenderBalance)
                 .as("Sender balance should not change after failed transfer")
                 .isEqualTo(initialSenderBalance);
@@ -89,31 +92,34 @@ public class TransferMoneyNegativeTest extends BaseTest {
         // 3 - Get sender profile before deposit
         GetCustomerProfileResponse senderProfileBeforeDeposit = CustomerSteps.getCustomerProfile(senderSpec);
 
+        // 4 - Get sender account id
         int senderAccountId = senderProfileBeforeDeposit.getAccounts().get(0).getId();
 
-        // 4 - Deposit some money to sender account
+        // 5 - Deposit money to sender account
         int randomBalance = RandomData.getRandomBalance();
         AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
 
-        // 5 - Create receiver
+        // 6 - Create receiver
         CreateUserRequest receiverUser = AdminSteps.createUser();
 
-        // 6 - Create receiver account
+        // 7 - Create receiver account
         var receiverSpec = RequestSpecs.authAsUser(receiverUser.getUsername(), receiverUser.getPassword());
         AccountsSteps.createAccount(receiverSpec);
 
-        // 7 - Get receiver profile before transfer
+        // 8 - Get receiver profile before transfer
         GetCustomerProfileResponse receiverProfileBefore = CustomerSteps.getCustomerProfile(receiverSpec);
 
+        // 9 - Get receiver account id
         int receiverAccountId = receiverProfileBefore.getAccounts().get(0).getId();
 
-        // 8 - Get updated sender profile before transfer
+        // 10 - Get updated sender profile before transfer
         GetCustomerProfileResponse senderProfileBefore = CustomerSteps.getCustomerProfile(senderSpec);
 
+        // 11 - Get balances
         double initialSenderBalance = senderProfileBefore.getAccounts().get(0).getBalance();
         double initialReceiverBalance = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 9 - Attempt to perform transfer with invalid amount
+        // 12 - Attempt to perform transfer with invalid amount
         double transferAmount = 0;
         AccountsSteps.transferMoneyExpectingError(
                 senderSpec,
@@ -123,15 +129,15 @@ public class TransferMoneyNegativeTest extends BaseTest {
                 "Transfer amount must be at least 0.01"
         );
 
-        // 10 - Get profiles after failed transfer
+        // 13 - Get profiles after failed transfer
         GetCustomerProfileResponse senderProfileAfter = CustomerSteps.getCustomerProfile(senderSpec);
-
         GetCustomerProfileResponse receiverProfileAfter = CustomerSteps.getCustomerProfile(receiverSpec);
 
+        // 14 - Get balances
         double finalSenderBalance = senderProfileAfter.getAccounts().get(0).getBalance();
         double finalReceiverBalance = receiverProfileAfter.getAccounts().get(0).getBalance();
 
-        // 11 - Assert balances did not change
+        // 15 - Assert balances did not change
         softly.assertThat(finalSenderBalance)
                 .as("Sender balance should not change after failed transfer")
                 .isEqualTo(initialSenderBalance);
@@ -153,31 +159,34 @@ public class TransferMoneyNegativeTest extends BaseTest {
         // 3 - Get sender profile before deposit
         GetCustomerProfileResponse senderProfileBeforeDeposit = CustomerSteps.getCustomerProfile(senderSpec);
 
+        // 4 - Get sender account id
         int senderAccountId = senderProfileBeforeDeposit.getAccounts().get(0).getId();
 
-        // 4 - Deposit some money to sender account
+        // 5 - Deposit some money to sender account
         int randomBalance = RandomData.getRandomBalance();
         AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
 
-        // 5 - Create receiver
+        // 6 - Create receiver
         CreateUserRequest receiverUser = AdminSteps.createUser();
 
-        // 6 - Create receiver account
+        // 7 - Create receiver account
         var receiverSpec = RequestSpecs.authAsUser(receiverUser.getUsername(), receiverUser.getPassword());
         AccountsSteps.createAccount(receiverSpec);
 
-        // 7 - Get receiver profile before transfer
+        // 8 - Get receiver profile before transfer
         GetCustomerProfileResponse receiverProfileBefore = CustomerSteps.getCustomerProfile(receiverSpec);
 
+        // 9 - Get receiver account id
         int receiverAccountId = receiverProfileBefore.getAccounts().get(0).getId();
 
-        // 8 - Get updated sender profile before transfer
+        // 10 - Get updated sender profile before transfer
         GetCustomerProfileResponse senderProfileBefore = CustomerSteps.getCustomerProfile(senderSpec);
 
+        // 11 - Get balances
         double initialSenderBalance = senderProfileBefore.getAccounts().get(0).getBalance();
         double initialReceiverBalance = receiverProfileBefore.getAccounts().get(0).getBalance();
 
-        // 10 - Attempt to perform transfer exceeding the limit
+        // 12 - Attempt to perform transfer exceeding the limit
         double transferAmount = 10000.01;
         AccountsSteps.transferMoneyExpectingError(
                 senderSpec,
@@ -187,15 +196,15 @@ public class TransferMoneyNegativeTest extends BaseTest {
                 "Transfer amount cannot exceed 10000"
         );
 
-        // 11 - Get profiles after failed transfer
+        // 13 - Get profiles after failed transfer
         GetCustomerProfileResponse senderProfileAfter = CustomerSteps.getCustomerProfile(senderSpec);
-
         GetCustomerProfileResponse receiverProfileAfter = CustomerSteps.getCustomerProfile(receiverSpec);
 
+        // 14 - Get profiles balances
         double finalSenderBalance = senderProfileAfter.getAccounts().get(0).getBalance();
         double finalReceiverBalance = receiverProfileAfter.getAccounts().get(0).getBalance();
 
-        // 12 - Assert balances did not change
+        // 15 - Assert balances did not change
         softly.assertThat(finalSenderBalance)
                 .as("Sender balance should not change after failed transfer exceeding the limit")
                 .isEqualTo(initialSenderBalance);

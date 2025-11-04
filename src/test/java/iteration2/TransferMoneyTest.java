@@ -2,14 +2,10 @@ package iteration2;
 
 import generators.RandomData;
 import models.*;
-import requests.skeleton.Endpoint;
-import requests.skeleton.requesters.CrudRequester;
-import requests.skeleton.requesters.ValidatedCrudRequester;
 import requests.steps.AccountsSteps;
 import requests.steps.AdminSteps;
 import requests.steps.CustomerSteps;
 import specs.RequestSpecs;
-import specs.ResponseSpecs;
 
 import static org.assertj.core.api.Assertions.offset;
 
