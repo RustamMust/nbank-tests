@@ -3,6 +3,7 @@ package requests.steps;
 import io.restassured.specification.RequestSpecification;
 import models.DepositMoneyRequest;
 import models.DepositMoneyResponse;
+import models.ErrorType;
 import models.TransferMoneyRequest;
 import requests.skeleton.Endpoint;
 import requests.skeleton.requesters.CrudRequester;
@@ -69,32 +70,25 @@ public class AccountsSteps {
     public static void depositMoneyExpectingError(RequestSpecification userSpec,
                                                   int accountId,
                                                   double amount,
+                                                  ErrorType errorType,
                                                   String expectedErrorMessage) {
-        DepositMoneyRequest invalidDepositRequest = DepositMoneyRequest.builder()
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
                 .id(accountId)
                 .balance(amount)
                 .build();
 
-        new CrudRequester(
-                userSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsBadRequestPlainText(expectedErrorMessage)
-        ).post(invalidDepositRequest);
-    }
-
-    public static void depositMoneyExpectingForbiddenError(RequestSpecification userSpec,
-                                                           int targetAccountId,
-                                                           double amount,
-                                                           String expectedErrorMessage) {
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(targetAccountId)
-                .balance(amount)
-                .build();
-
-        new CrudRequester(
-                userSpec,
-                Endpoint.DEPOSIT,
-                ResponseSpecs.requestReturnsForbiddenPlainText(expectedErrorMessage)
-        ).post(depositRequest);
+        switch (errorType) {
+            case BAD_REQUEST -> new CrudRequester(
+                    userSpec,
+                    Endpoint.DEPOSIT,
+                    ResponseSpecs.requestReturnsBadRequestPlainText(expectedErrorMessage)
+            ).post(depositRequest);
+            case FORBIDDEN -> new CrudRequester(
+                    userSpec,
+                    Endpoint.DEPOSIT,
+                    ResponseSpecs.requestReturnsForbiddenPlainText(expectedErrorMessage)
+            ).post(depositRequest);
+            default -> throw new IllegalArgumentException("Unsupported error type: " + errorType);
+        }
     }
 }

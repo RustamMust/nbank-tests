@@ -1,16 +1,17 @@
 package iteration2;
 
+import assertions.BalanceAssertions;
 import generators.RandomData;
-
+import helpers.AccountStepsHelper;
 import io.restassured.specification.RequestSpecification;
 import iteration1.BaseTest;
-import models.*;
+import models.CreateUserRequest;
+import models.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import requests.steps.AdminSteps;
-import requests.steps.CustomerSteps;
 import requests.steps.AccountsSteps;
+import requests.steps.AdminSteps;
 import specs.RequestSpecs;
 
 import static org.assertj.core.api.Assertions.offset;
@@ -27,30 +28,25 @@ public class DepositNegativeTests extends BaseTest {
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
         AccountsSteps.createAccount(requestSpec);
 
-        // 3 - Get customer profile before deposit
-        GetCustomerProfileResponse customerProfile = CustomerSteps.getCustomerProfile(requestSpec);
+        // 3 - Get customer account id from profile
+        int accountId = AccountStepsHelper.getAccountId(requestSpec);
 
-        // 4 - Get customer account id from profile
-        int accountId = customerProfile.getAccounts().get(0).getId();
+        // 4 - Get balance before deposit
+        double initialBalance = AccountStepsHelper.getBalance(requestSpec);
 
-        // 5 - Get balance before deposit
-        double initialBalance = customerProfile.getAccounts().get(0).getBalance();
-
-        // 6 - Try to make invalid deposit
+        // 5 - Try to make invalid deposit
         AccountsSteps.depositMoneyExpectingError(
                 requestSpec,
                 accountId,
                 depositAmount,
+                ErrorType.BAD_REQUEST,
                 "Deposit amount must be at least 0.01"
         );
 
-        // 7 - Get customer profile after deposit
-        GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
+        // 6 - Get balance after deposit
+        double finalBalance = AccountStepsHelper.getBalance(requestSpec);
 
-        // 8 - Get balance after deposit
-        double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
-
-        // 9 - Assert that balance remains unchanged
+        // 7 - Assert that balance remains unchanged
         softly.assertThat(finalBalance)
                 .as("Balance should not change after invalid deposit")
                 .isEqualTo(initialBalance, offset(0.001));
@@ -66,33 +62,26 @@ public class DepositNegativeTests extends BaseTest {
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
         AccountsSteps.createAccount(requestSpec);
 
-        // 3 - Get customer profile before deposit
-        GetCustomerProfileResponse customerProfile = CustomerSteps.getCustomerProfile(requestSpec);
+        // 3 - Get customer account id from profile
+        int accountId = AccountStepsHelper.getAccountId(requestSpec);
 
-        // 4 - Get customer account id from profile
-        int accountId = customerProfile.getAccounts().get(0).getId();
+        // 4 - Get balance before deposit
+        double initialBalance = AccountStepsHelper.getBalance(requestSpec);
 
-        // 5 - Get balance before deposit
-        double initialBalance = customerProfile.getAccounts().get(0).getBalance();
-
-        // 6 - Try to make invalid deposit
+        // 5 - Try to make invalid deposit
         AccountsSteps.depositMoneyExpectingError(
                 requestSpec,
                 accountId,
                 depositAmount,
+                ErrorType.BAD_REQUEST,
                 "Deposit amount cannot exceed 5000"
         );
 
-        // 7 - Get customer profile after deposit
-        GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
+        // 6 - Get balance after deposit
+        double finalBalance = AccountStepsHelper.getBalance(requestSpec);
 
-        // 8 - Get balance after deposit
-        double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
-
-        // 9 - Assert that balance remains unchanged
-        softly.assertThat(finalBalance)
-                .as("Balance should not change after invalid deposit")
-                .isEqualTo(initialBalance, offset(0.001));
+        // 7 - Assert that balance remains unchanged
+        BalanceAssertions.assertBalanceUnchanged(softly, initialBalance, finalBalance);
     }
 
     @Test
@@ -108,32 +97,25 @@ public class DepositNegativeTests extends BaseTest {
         AccountsSteps.createAccount(user1Spec);
         AccountsSteps.createAccount(user2Spec);
 
-        // 3 - Get user1 profile before deposit
-        GetCustomerProfileResponse user1ProfileBefore = CustomerSteps.getCustomerProfile(user1Spec);
+        // 3 - Get user1 account id and balance before deposit
+        int user1AccountId = AccountStepsHelper.getAccountId(user1Spec);
+        double initialBalance = AccountStepsHelper.getBalance(user1Spec);
 
-        // 4 - Get user1 account id and balance before deposit
-        int user1AccountId = user1ProfileBefore.getAccounts().get(0).getId();
-        double initialBalance = user1ProfileBefore.getAccounts().get(0).getBalance();
-
-        // 5 - Attempt to deposit into another user's account
+        // 4 - Attempt to deposit into another user's account
         int randomBalance = RandomData.getRandomBalance();
-        AccountsSteps.depositMoneyExpectingForbiddenError(
+        AccountsSteps.depositMoneyExpectingError(
                 user2Spec,
                 user1AccountId,
                 randomBalance,
+                ErrorType.FORBIDDEN,
                 "Unauthorized access to account"
         );
 
-        // 6 - Get user1 profile after deposit attempt
-        GetCustomerProfileResponse user1ProfileAfter = CustomerSteps.getCustomerProfile(user1Spec);
+        // 5 - Get balance
+        double finalBalance = AccountStepsHelper.getBalance(user1Spec);
 
-        // 7 - Get balance
-        double finalBalance = user1ProfileAfter.getAccounts().get(0).getBalance();
-
-        // 8 - Assert that balance remains unchanged
-        softly.assertThat(finalBalance)
-                .as("Balance should not change after unauthorized deposit")
-                .isEqualTo(initialBalance, offset(0.001));
+        // 6 - Assert that balance remains unchanged
+        BalanceAssertions.assertBalanceUnchanged(softly, initialBalance, finalBalance);
     }
 
     @Test
@@ -145,31 +127,25 @@ public class DepositNegativeTests extends BaseTest {
         RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
         AccountsSteps.createAccount(requestSpec);
 
-        // 3 - Get customer profile before deposit
-        GetCustomerProfileResponse customerProfile = CustomerSteps.getCustomerProfile(requestSpec);
+        // 3 - Get customer balance from profile
+        double initialBalance = AccountStepsHelper.getBalance(requestSpec);
 
-        // 4 - Get customer balance from profile
-        double initialBalance = customerProfile.getAccounts().get(0).getBalance();
+        // 4 - Try to deposit
+        int nonExistingAccountId = RandomData.getNonExistingAccountId();
 
-        // 5 - Try to deposit
-        int nonExistingAccountId = RandomData.getNonExistingAccountId();;
         int randomBalance = RandomData.getRandomBalance();
-        AccountsSteps.depositMoneyExpectingForbiddenError(
+        AccountsSteps.depositMoneyExpectingError(
                 requestSpec,
                 nonExistingAccountId,
                 randomBalance,
+                ErrorType.FORBIDDEN,
                 "Unauthorized access to account"
         );
 
-        // 6 - Get profile again
-        GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
+        // 5 - Get customer balance from profile
+        double finalBalance = AccountStepsHelper.getBalance(requestSpec);
 
-        // 7 - Get customer balance from profile
-        double finalBalance = updatedProfile.getAccounts().get(0).getBalance();
-
-        // 8 - Assert balance unchanged
-        softly.assertThat(finalBalance)
-                .as("Balance should not change after trying to deposit to non-existing account")
-                .isEqualTo(initialBalance, offset(0.001));
+        // 6 - Assert balance unchanged
+        BalanceAssertions.assertBalanceUnchanged(softly, initialBalance, finalBalance);
     }
 }

@@ -5,12 +5,9 @@ import io.restassured.specification.RequestSpecification;
 import iteration1.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
-import requests.skeleton.Endpoint;
-import requests.skeleton.requesters.CrudRequester;
 import requests.steps.AdminSteps;
 import requests.steps.CustomerSteps;
 import specs.RequestSpecs;
-import specs.ResponseSpecs;
 
 public class UpdateUserNameNegativeTest extends BaseTest {
 
@@ -28,15 +25,10 @@ public class UpdateUserNameNegativeTest extends BaseTest {
 
         // 4 - Prepare invalid name (single word)
         String invalidName = RandomData.getInvalidNameSingleWord();
-        UpdateCustomerProfileRequest updateRequest =
-                UpdateCustomerProfileRequest.builder().name(invalidName).build();
-
-        // 5 - Try to update profile with invalid name
-        new CrudRequester(
-                requestSpec,
-                Endpoint.UPDATE_CUSTOMER_PROFILE,
-                ResponseSpecs.requestReturnsBadRequestPlainText("Name must contain two words with letters only")
-        ).put(updateRequest);
+        CustomerSteps.updateProfileExpectingError(requestSpec,
+                invalidName,
+                "Name must contain two words with letters only"
+        );
 
         // 6 - Get customer profile after update
         GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
