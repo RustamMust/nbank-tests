@@ -29,4 +29,8 @@ public class RandomData {
     public static int getRandomBalance() {
         return ThreadLocalRandom.current().nextInt(1, 5000);
     }
+
+    public static int getNonExistingAccountId() {
+        return ThreadLocalRandom.current().nextInt(9000, 100000);
+    }
 }

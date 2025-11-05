@@ -21,6 +21,26 @@ public enum Endpoint {
             "/accounts",
             BaseModel.class,
             CreateAccountResponse.class
+    ),
+    DEPOSIT(
+            "/accounts/deposit",
+            DepositMoneyRequest.class,
+            DepositMoneyResponse.class
+    ),
+    CUSTOMER_PROFILE(
+            "/customer/profile",
+            BaseModel.class,
+            GetCustomerProfileResponse.class
+    ),
+    UPDATE_CUSTOMER_PROFILE(
+            "/customer/profile",
+            UpdateCustomerProfileRequest.class,
+            UpdateCustomerProfileResponse.class
+    ),
+    TRANSFER(
+            "/accounts/transfer",
+            TransferMoneyRequest.class,
+            TransferMoneyResponse.class
     );
     private final String url;
     private final Class<? extends BaseModel> requestModel;
