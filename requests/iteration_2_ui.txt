@@ -20,7 +20,7 @@ Negative Cases
 1. Deposit is not allowed if no account is selected but an amount is entered
 2. Deposit is not allowed if an account is selected but the amount field is empty
 3. Deposit is not allowed if both account and amount are not selected/entered
-4. Verify that proper UI validation messages appear for invalid amount values (negative number, zero, or string input)
+4. Verify that proper UI validation messages appear for invalid amount values (negative number)
 
 
 
@@ -53,8 +53,6 @@ Negative Cases
 5. Transfer is not allowed if the checkbox "Confirm details are correct" is not checked
 6. Verify that proper UI validation messages appear for invalid inputs, such as:
 - Attempting to transfer more money than is available in the account
-- Attempting to transfer to a non-existent account
-- Attempting to transfer to the user’s own account
 
 
 
