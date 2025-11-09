@@ -1,4 +1,4 @@
-package iteration2;
+package iteration2.api;
 
 import assertions.BalanceAssertions;
 import generators.RandomData;
@@ -8,7 +8,7 @@ import requests.steps.AccountsSteps;
 import requests.steps.AdminSteps;
 import specs.RequestSpecs;
 
-import iteration1.BaseTest;
+import iteration1.api.BaseTest;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
