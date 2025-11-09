@@ -1,10 +1,10 @@
-package iteration2;
+package iteration2.api;
 
 import assertions.BalanceAssertions;
 import generators.RandomData;
 
 import helpers.AccountStepsHelper;
-import iteration1.BaseTest;
+import iteration1.api.BaseTest;
 import models.*;
 import org.junit.jupiter.api.Test;
 import requests.steps.AdminSteps;

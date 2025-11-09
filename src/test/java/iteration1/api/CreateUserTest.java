@@ -1,4 +1,4 @@
-package iteration1;
+package iteration1.api;
 
 import java.util.List;
 import java.util.stream.Stream;
