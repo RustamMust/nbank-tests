@@ -14,4 +14,11 @@ public class AccountStepsHelper {
                 .getFirst()
                 .getId();
     }
+
+    public static String getAccountName(RequestSpecification spec) {
+        return CustomerSteps.getCustomerProfile(spec)
+                .getAccounts()
+                .getFirst()
+                .getAccountNumber();
+    }
 }
