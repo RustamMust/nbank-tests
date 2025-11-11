@@ -10,7 +10,9 @@ public enum BankAlert {
     SUCCESSFULLY_DEPOSITED("✅ Successfully deposited"),
     INVALID_AMOUNT("❌ Please enter a valid amount."),
     SUCCESSFULLY_TRANSFERRED("✅ Successfully transferred"),
-    TRANSFER_CANNOT_EXCEED_LIMIT("❌ Error: Transfer amount cannot exceed 10000");
+    TRANSFER_CANNOT_EXCEED_LIMIT("❌ Error: Transfer amount cannot exceed 10000"),
+    NAME_UPDATED_SUCCESSFULLY("✅ Name updated successfully!"),
+    NAME_MUST_CONTAINS_TWO_WORDS("Name must contain two words with letters only");
 
     private final String message;
 

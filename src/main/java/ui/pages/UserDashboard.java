@@ -14,6 +14,8 @@ public class UserDashboard extends BasePage<UserDashboard>{
     private SelenideElement createNewAccount = $(Selectors.byText("➕ Create New Account"));
     private SelenideElement depositMoneyButton = $(byText("\uD83D\uDCB0 Deposit Money"));
     private SelenideElement makeTransferButton = $(byText("🔄 Make a Transfer"));
+    private final SelenideElement profileButton = $(byText("Noname"));
+    private final SelenideElement userDashboardTitle = $(byText("User Dashboard"));
 
     @Override
     public String url() {
@@ -36,7 +38,18 @@ public class UserDashboard extends BasePage<UserDashboard>{
     }
 
     public UserDashboard checkUserDashboardVisible() {
-        $(byText("User Dashboard")).shouldBe(Condition.visible);
+        userDashboardTitle.shouldBe(Condition.visible);
+        return this;
+    }
+
+    public EditProfilePage openProfile() {
+        profileButton.click();
+        return new EditProfilePage();
+    }
+
+
+    public UserDashboard checkWelcomeText(String name) {
+        welcomeText.shouldHave(Condition.text("Welcome, " + name + "!"));
         return this;
     }
 }
