@@ -12,39 +12,16 @@ import api.requests.steps.AdminSteps;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
 import com.codeborne.selenide.*;
-import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
+import iteration1.ui.BaseUiTest;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.Alert;
-
-import java.util.Map;
 
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TransferMoneyTest {
-    protected SoftAssertions softly;
-
-    @BeforeAll
-    public static void setupSelenoid() {
-        //Configuration.remote = "http://localhost:4444/wd/hub";
-        Configuration.baseUrl = "http://localhost:3000";
-        Configuration.browser = "chrome";
-        Configuration.browserSize = "1920x1080";
-
-        Configuration.browserCapabilities.setCapability("selenoid:options",
-                Map.of("enableVNC", true, "enableLog", true)
-        );
-    }
-
-    @BeforeEach
-    public void setupSoftAssertions() {
-        softly = new SoftAssertions();
-    }
-
+public class TransferMoneyTest extends BaseUiTest {
     @Test
     public void userCanTransferMoneyTest() {
         // ШАГИ ПО НАСТРОЙКЕ ОКРУЖЕНИЯ
@@ -76,20 +53,8 @@ public class TransferMoneyTest {
         double senderBalanceBefore = AccountStepsHelper.getBalance(senderSpec);
         double receiverBalanceBefore = AccountStepsHelper.getBalance(receiverSpec);
 
-        // 9 - Get user auth header
-        String userAuthHeader = new CrudRequester(
-                RequestSpecs.unauthSpec(),
-                Endpoint.LOGIN,
-                ResponseSpecs.requestReturnsOK())
-                .post(LoginUserRequest.builder().username(senderUser.getUsername()).password(senderUser.getPassword()).build())
-                .extract()
-                .header("Authorization");
-
-        // 10 - Open page
-        Selenide.open("/");
-
-        // 11 - Set authToken to localStorage
-        executeJavaScript("localStorage.setItem('authToken', arguments[0]);", userAuthHeader);
+        // Авторизация через API
+        authAsUser(senderUser);
 
         // 12 - Open dashboard page
         Selenide.open("/dashboard");
