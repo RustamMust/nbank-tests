@@ -6,10 +6,12 @@ import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.Selenide;
 
-import models.CreateUserRequest;
+import api.models.CreateUserRequest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import requests.steps.AdminSteps;
+import api.requests.steps.AdminSteps;
+import ui.pages.AdminPanel;
+import ui.pages.LoginPage;
 
 import java.util.Map;
 
@@ -32,13 +34,8 @@ public class LoginUserTest {
     public void adminCanLoginWithCorrectDataTest() {
         CreateUserRequest admin = CreateUserRequest.builder().username("admin").password("admin").build();
 
-        Selenide.open("/login");
-
-        $(Selectors.byAttribute("placeholder", "Username")).sendKeys(admin.getUsername());
-        $(Selectors.byAttribute("placeholder", "Password")).sendKeys(admin.getPassword());
-        $("button").click();
-
-        $(Selectors.byText("Admin Panel")).shouldBe(Condition.visible);
+        new LoginPage().open().login(admin.getUsername(), admin.getPassword())
+                        .getPage(AdminPanel.class).getAdminPanelText().shouldBe(Condition.visible);
     }
 
     @Test

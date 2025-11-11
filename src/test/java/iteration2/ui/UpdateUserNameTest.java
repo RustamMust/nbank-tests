@@ -1,23 +1,23 @@
 package iteration2.ui;
 
-import assertions.ProfileAssertions;
+import api.assertions.ProfileAssertions;
 import com.codeborne.selenide.*;
-import generators.RandomData;
+import api.generators.RandomData;
 import io.restassured.specification.RequestSpecification;
-import models.CreateUserRequest;
-import models.GetCustomerProfileResponse;
-import models.LoginUserRequest;
+import api.models.CreateUserRequest;
+import api.models.GetCustomerProfileResponse;
+import api.models.LoginUserRequest;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.Alert;
-import requests.skeleton.Endpoint;
-import requests.skeleton.requesters.CrudRequester;
-import requests.steps.AdminSteps;
-import requests.steps.CustomerSteps;
-import specs.RequestSpecs;
-import specs.ResponseSpecs;
+import api.requests.skeleton.Endpoint;
+import api.requests.skeleton.requesters.CrudRequester;
+import api.requests.steps.AdminSteps;
+import api.requests.steps.CustomerSteps;
+import api.specs.RequestSpecs;
+import api.specs.ResponseSpecs;
 
 import java.util.Map;
 

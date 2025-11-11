@@ -1,15 +1,15 @@
 package iteration1.ui;
 
 import com.codeborne.selenide.*;
-import generators.RandomModelGenerator;
-import models.CreateUserRequest;
-import models.CreateUserResponse;
-import models.comparison.ModelAssertions;
+import api.generators.RandomModelGenerator;
+import api.models.CreateUserRequest;
+import api.models.CreateUserResponse;
+import api.models.comparison.ModelAssertions;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.Alert;
-import specs.RequestSpecs;
+import api.specs.RequestSpecs;
 
 import java.util.Arrays;
 import java.util.Map;
