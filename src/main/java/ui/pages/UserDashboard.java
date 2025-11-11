@@ -13,6 +13,7 @@ public class UserDashboard extends BasePage<UserDashboard>{
     private SelenideElement welcomeText = $(Selectors.byClassName("welcome-text"));
     private SelenideElement createNewAccount = $(Selectors.byText("➕ Create New Account"));
     private SelenideElement depositMoneyButton = $(byText("\uD83D\uDCB0 Deposit Money"));
+    private SelenideElement makeTransferButton = $(byText("🔄 Make a Transfer"));
 
     @Override
     public String url() {
@@ -27,6 +28,11 @@ public class UserDashboard extends BasePage<UserDashboard>{
     public DepositMoneyPage depositMoney() {
         depositMoneyButton.click();
         return getPage(DepositMoneyPage.class);
+    }
+
+    public TransferPage makeTransfer() {
+        makeTransferButton.click();
+        return getPage(TransferPage.class);
     }
 
     public UserDashboard checkUserDashboardVisible() {
