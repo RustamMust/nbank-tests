@@ -1,11 +1,11 @@
 package iteration1.api;
 
-import org.assertj.core.data.Offset;
+import api.requests.steps.AdminSteps;
 import api.utils.TestContext;
 import org.assertj.core.api.SoftAssertions;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import api.requests.steps.AdminSteps;
 
 public class BaseTest {
     protected static final Offset<Double> MONEY_TOLERANCE = Offset.offset(0.001);

@@ -9,6 +9,9 @@ import api.requests.skeleton.requesters.CrudRequester;
 import api.requests.skeleton.requesters.ValidatedCrudRequester;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import org.apache.http.client.protocol.ResponseAuthCache;
+
+import java.util.List;
 
 public class AdminSteps {
     public static CreateUserRequest createUser() {
@@ -37,5 +40,12 @@ public class AdminSteps {
                 Endpoint.ADMIN_USER,
                 ResponseSpecs.requestReturnsOK()
         ).delete(userId);
+    }
+
+    public static List<CreateUserResponse> getAllUsers() {
+        return new ValidatedCrudRequester<CreateUserResponse>(
+                RequestSpecs.adminSpec(),
+                Endpoint.ADMIN_USER,
+                ResponseSpecs.requestReturnsOK()).getAll(CreateUserResponse[].class);
     }
 }

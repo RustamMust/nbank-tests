@@ -1,7 +1,7 @@
 package api.helpers;
 
-import io.restassured.specification.RequestSpecification;
 import api.requests.steps.CustomerSteps;
+import io.restassured.specification.RequestSpecification;
 
 public class AccountStepsHelper {
     public static double getBalance(RequestSpecification spec) {

@@ -3,16 +3,16 @@ package iteration2.api;
 import api.assertions.BalanceAssertions;
 import api.generators.RandomData;
 import api.helpers.AccountStepsHelper;
-import io.restassured.specification.RequestSpecification;
-import iteration1.api.BaseTest;
 import api.models.CreateUserRequest;
 import api.models.ErrorType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import api.requests.steps.AccountsSteps;
 import api.requests.steps.AdminSteps;
 import api.specs.RequestSpecs;
+import io.restassured.specification.RequestSpecification;
+import iteration1.api.BaseTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class DepositNegativeTests extends BaseTest {
 

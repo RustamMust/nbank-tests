@@ -2,14 +2,13 @@ package iteration2.api;
 
 import api.assertions.BalanceAssertions;
 import api.generators.RandomData;
-
 import api.helpers.AccountStepsHelper;
 import api.models.CreateUserRequest;
+import api.requests.steps.AccountsSteps;
+import api.requests.steps.AdminSteps;
+import api.specs.RequestSpecs;
 import iteration1.api.BaseTest;
 import org.junit.jupiter.api.Test;
-import api.requests.steps.AdminSteps;
-import api.requests.steps.AccountsSteps;
-import api.specs.RequestSpecs;
 
 public class TransferMoneyNegativeTest extends BaseTest {
 

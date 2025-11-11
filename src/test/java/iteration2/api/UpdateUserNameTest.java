@@ -1,16 +1,16 @@
 package iteration2.api;
 
 import api.assertions.ProfileAssertions;
+import api.generators.RandomData;
 import api.models.CreateUserRequest;
 import api.models.GetCustomerProfileResponse;
 import api.models.UpdateCustomerProfileResponse;
-import io.restassured.specification.RequestSpecification;
-import iteration1.api.BaseTest;
-import org.junit.jupiter.api.Test;
-import api.generators.RandomData;
 import api.requests.steps.AdminSteps;
 import api.requests.steps.CustomerSteps;
 import api.specs.RequestSpecs;
+import io.restassured.specification.RequestSpecification;
+import iteration1.api.BaseTest;
+import org.junit.jupiter.api.Test;
 
 public class UpdateUserNameTest extends BaseTest {
 

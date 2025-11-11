@@ -1,22 +1,22 @@
 package iteration2.ui;
 
 import api.assertions.BalanceAssertions;
-import com.codeborne.selenide.*;
 import api.generators.RandomData;
 import api.helpers.AccountStepsHelper;
 import api.models.CreateUserRequest;
 import api.models.LoginUserRequest;
-import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.openqa.selenium.Alert;
 import api.requests.skeleton.Endpoint;
 import api.requests.skeleton.requesters.CrudRequester;
 import api.requests.steps.AccountsSteps;
 import api.requests.steps.AdminSteps;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import com.codeborne.selenide.*;
+import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.openqa.selenium.Alert;
 
 import java.util.Map;
 

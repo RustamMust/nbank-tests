@@ -1,21 +1,21 @@
 package iteration1.api;
 
-import java.util.List;
-import java.util.stream.Stream;
-
 import api.generators.RandomModelGenerator;
 import api.models.CreateUserRequest;
 import api.models.CreateUserResponse;
 import api.models.comparison.ModelAssertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import api.requests.skeleton.Endpoint;
 import api.requests.skeleton.requesters.CrudRequester;
 import api.requests.skeleton.requesters.ValidatedCrudRequester;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 public class CreateUserTest extends BaseTest {
 

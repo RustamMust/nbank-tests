@@ -5,13 +5,13 @@ import api.helpers.AccountStepsHelper;
 import api.models.CreateUserRequest;
 import api.models.DepositMoneyResponse;
 import api.models.TransactionType;
+import api.requests.steps.AccountsSteps;
+import api.requests.steps.AdminSteps;
+import api.specs.RequestSpecs;
 import io.restassured.specification.RequestSpecification;
 import iteration1.api.BaseTest;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import api.requests.steps.AdminSteps;
-import api.requests.steps.AccountsSteps;
-import api.specs.RequestSpecs;
 
 public class DepositMoneyTest extends BaseTest {
 

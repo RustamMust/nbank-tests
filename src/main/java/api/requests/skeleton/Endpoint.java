@@ -41,6 +41,11 @@ public enum Endpoint {
             "/accounts/transfer",
             TransferMoneyRequest.class,
             TransferMoneyResponse.class
+    ),
+    CUSTOMER_ACCOUNTS(
+            "/customer/accounts",
+            BaseModel.class,
+            CreateAccountResponse.class
     );
     private final String url;
     private final Class<? extends BaseModel> requestModel;

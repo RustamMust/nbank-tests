@@ -1,23 +1,23 @@
 package iteration2.ui;
 
 import api.assertions.ProfileAssertions;
-import com.codeborne.selenide.*;
 import api.generators.RandomData;
-import io.restassured.specification.RequestSpecification;
 import api.models.CreateUserRequest;
 import api.models.GetCustomerProfileResponse;
 import api.models.LoginUserRequest;
-import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.openqa.selenium.Alert;
 import api.requests.skeleton.Endpoint;
 import api.requests.skeleton.requesters.CrudRequester;
 import api.requests.steps.AdminSteps;
 import api.requests.steps.CustomerSteps;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import com.codeborne.selenide.*;
+import io.restassured.specification.RequestSpecification;
+import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.openqa.selenium.Alert;
 
 import java.util.Map;
 
@@ -25,7 +25,6 @@ import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.*;
-import static com.codeborne.selenide.Selenide.$;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class UpdateUserNameTest {
