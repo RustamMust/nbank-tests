@@ -1,23 +1,23 @@
 package iteration1.api;
 
-import models.CreateUserRequest;
-import models.CreateUserResponse;
-import models.LoginUserRequest;
+import api.models.CreateUserRequest;
+import api.models.CreateUserResponse;
+import api.models.LoginUserRequest;
+import api.requests.skeleton.Endpoint;
+import api.requests.skeleton.requesters.CrudRequester;
+import api.requests.skeleton.requesters.ValidatedCrudRequester;
+import api.requests.steps.AdminSteps;
+import api.specs.RequestSpecs;
+import api.specs.ResponseSpecs;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
-import requests.skeleton.Endpoint;
-import requests.skeleton.requesters.CrudRequester;
-import requests.skeleton.requesters.ValidatedCrudRequester;
-import requests.steps.AdminSteps;
-import specs.RequestSpecs;
-import specs.ResponseSpecs;
 
 public class LoginUserTest extends BaseTest {
 
     @Test
     public void adminCanGenerateAuthTokenTest() {
         // 1 - Prepare data for admin user creation
-        LoginUserRequest userRequest = models.LoginUserRequest.builder().username("admin").password("admin").build();
+        LoginUserRequest userRequest = LoginUserRequest.builder().username("admin").password("admin").build();
 
         // 2 - Login user to get "Authorization" token in response header
         new ValidatedCrudRequester<CreateUserResponse>
@@ -36,7 +36,7 @@ public class LoginUserTest extends BaseTest {
                 Endpoint.LOGIN,
                 ResponseSpecs.requestReturnsOK())
                 .post(
-                        models.LoginUserRequest.builder()
+                        LoginUserRequest.builder()
                                 .username(userRequest.getUsername())
                                 .password(userRequest.getPassword())
                                 .build())

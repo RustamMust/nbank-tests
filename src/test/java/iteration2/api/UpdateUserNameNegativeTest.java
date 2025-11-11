@@ -1,14 +1,15 @@
 package iteration2.api;
 
-import assertions.ProfileAssertions;
-import generators.RandomData;
+import api.assertions.ProfileAssertions;
+import api.generators.RandomData;
+import api.models.CreateUserRequest;
+import api.models.GetCustomerProfileResponse;
+import api.requests.steps.AdminSteps;
+import api.requests.steps.CustomerSteps;
+import api.specs.RequestSpecs;
 import io.restassured.specification.RequestSpecification;
 import iteration1.api.BaseTest;
-import models.*;
 import org.junit.jupiter.api.Test;
-import requests.steps.AdminSteps;
-import requests.steps.CustomerSteps;
-import specs.RequestSpecs;
 
 public class UpdateUserNameNegativeTest extends BaseTest {
 

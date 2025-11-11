@@ -1,15 +1,17 @@
 package iteration2.api;
 
-import assertions.BalanceAssertions;
-import helpers.AccountStepsHelper;
+import api.assertions.BalanceAssertions;
+import api.helpers.AccountStepsHelper;
+import api.models.CreateUserRequest;
+import api.models.DepositMoneyResponse;
+import api.models.TransactionType;
+import api.requests.steps.AccountsSteps;
+import api.requests.steps.AdminSteps;
+import api.specs.RequestSpecs;
 import io.restassured.specification.RequestSpecification;
 import iteration1.api.BaseTest;
-import models.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import requests.steps.AdminSteps;
-import requests.steps.AccountsSteps;
-import specs.RequestSpecs;
 
 public class DepositMoneyTest extends BaseTest {
 

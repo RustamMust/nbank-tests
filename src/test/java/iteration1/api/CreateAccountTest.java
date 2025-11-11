@@ -1,13 +1,13 @@
 package iteration1.api;
 
+import api.models.CreateUserRequest;
+import api.models.GetCustomerProfileResponse;
+import api.requests.steps.AccountsSteps;
+import api.requests.steps.AdminSteps;
+import api.requests.steps.CustomerSteps;
+import api.specs.RequestSpecs;
 import io.restassured.specification.RequestSpecification;
-import models.CreateUserRequest;
-import models.GetCustomerProfileResponse;
 import org.junit.jupiter.api.Test;
-import requests.steps.AdminSteps;
-import requests.steps.CustomerSteps;
-import requests.steps.AccountsSteps;
-import specs.RequestSpecs;
 
 public class CreateAccountTest extends BaseTest {
 
