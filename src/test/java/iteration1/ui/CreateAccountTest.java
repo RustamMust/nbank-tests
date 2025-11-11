@@ -17,8 +17,10 @@ public class CreateAccountTest extends BaseUiTest {
     public void userCanCreateAccountTest() {
         CreateUserRequest user = AdminSteps.createUser();
 
+        // Авторизация через API
         authAsUser(user);
 
+        // Создаем новый аккаунт
         new UserDashboard().open().createNewAccount();
 
         List<CreateAccountResponse> createdAccounts = new UserSteps(user.getUsername(), user.getPassword())
