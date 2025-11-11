@@ -1,0 +1,77 @@
+Positive Case: User can make a deposit to their account
+
+Preconditions
+1. Admin has created a user
+2. User has logged in
+3. User has created an account
+
+Steps
+1. Click the "Deposit Money" button
+2. Select an account from the "Select Account" dropdown
+3. Enter the amount in the "Enter Amount" field
+4. Click the "Deposit" button
+
+Expected Results
+1. A popup window appears with the message "Successfully deposited"
+2. Verify via API that the deposit was successful
+3. After clicking OK, the user is redirected to the "User Dashboard" page
+
+Negative Cases
+1. Deposit is not allowed if no account is selected but an amount is entered
+2. Deposit is not allowed if an account is selected but the amount field is empty
+3. Deposit is not allowed if both account and amount are not selected/entered
+4. Verify that proper UI validation messages appear for invalid amount values (negative number)
+
+
+
+Positive Case: User can transfer money from one account to another
+
+Preconditions
+1. Admin has created a user
+2. User has logged in
+3. User has created Account 1
+4. User has created Account 2
+5. A deposit has been made to Account 1
+
+Steps
+1. Click the "Make a Transfer" button
+2. Enter the "Recipient Name"
+3. Enter the "Recipient Account Number"
+4. Enter the "Amount"
+5. Check the "Confirm details are correct" checkbox
+6. Click the "Send Transfer" button
+
+Expected Results
+1. A popup window appears with the message "Successfully transferred"
+2. Verify via API that the transfer was successful
+
+Negative Cases
+1. Transfer is not allowed if no account is selected
+2. Transfer is not allowed if "Recipient Name" is empty
+3. Transfer is not allowed if "Recipient Account Number" is empty
+4. Transfer is not allowed if "Amount" is empty
+5. Transfer is not allowed if the checkbox "Confirm details are correct" is not checked
+6. Verify that proper UI validation messages appear for invalid inputs, such as:
+- Attempting to transfer more money than is available in the account
+
+
+
+Positive Case: User can change their name
+
+Preconditions
+1. Admin has created a user
+2. User has logged in
+
+Steps
+1. Click the user’s name (located to the left of the Logout button)
+2. Enter a new name
+3. Click the "Save Changes" button
+
+Expected Results
+1. A popup window appears with the message "Name updated successfully!"
+2. Verify via API that the name was updated
+3. Verify that the new name is displayed on the User Dashboard, both after the word "Welcome" and to the left of the Logout button
+
+Negative Cases
+1. User cannot change their name to an invalid value — a validation message appears
+2. User cannot change their name if the field is empty and they click "Save" — a validation message appears
