@@ -15,12 +15,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CreateAccountTest extends BaseUiTest {
     @Test
     public void userCanCreateAccountTest() {
+        // 1 - Create a new user via API
         CreateUserRequest user = AdminSteps.createUser();
 
-        // Авторизация через API
+        // 2 - Set authToken to localStorage via API
         authAsUser(user);
 
-        // Создаем новый аккаунт
+        // 3 - Create an account
         new UserDashboard().open().createNewAccount();
 
         List<CreateAccountResponse> createdAccounts = new UserSteps(user.getUsername(), user.getPassword())

@@ -104,7 +104,7 @@ public class TransferMoneyTest extends BaseUiTest {
         // 9 - Set authToken to localStorage via API
         authAsUser(senderUser);
 
-        // 10 - Get transfer amount
+        // 10 - Get invalid transfer amount
         int transferAmount = 20000;
 
         // 11 - Open dashboard page

@@ -17,17 +17,17 @@ public class CreateUserTest extends BaseUiTest {
     public void adminCanCreateUserTest() {
         CreateUserRequest admin = CreateUserRequest.getAdmin();
 
-        // Авторизация через API
+        // Set authToken to localStorage via API
         authAsUser(admin);
 
-        // Админ создает юзера в банке
+        // Create a new user
         CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
 
         new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
                 .checkAlertMessageAndAccept(BankAlert.USER_CREATED_SUCCESSFULLY.getMessage())
                 .getAllUsers().findBy(Condition.exactText(newUser.getUsername() + "\nUSER")).shouldBe(Condition.visible);
 
-        // Проверка, что юзер создан на API
+        // Assert user created via API
         CreateUserResponse createdUser = AdminSteps.getAllUsers().stream()
                 .filter(user -> user.getUsername().equals(newUser.getUsername()))
                 .findFirst().get();
@@ -39,19 +39,19 @@ public class CreateUserTest extends BaseUiTest {
     public void adminCannotCreateUserWithInvalidDataTest() {
         CreateUserRequest admin = CreateUserRequest.getAdmin();
 
-        // Авторизация через API
+        // Set authToken to localStorage via API
         authAsUser(admin);
 
-        // Админ создает юзера в банке
+        // Create a new user
         CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
         newUser.setUsername("a");
 
-        // Проверка, что алерт "Username must be between 3 and 15 characters"
+        // Assert alert "Username must be between 3 and 15 characters"
         new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
                 .checkAlertMessageAndAccept(BankAlert.USERNAME_MUST_BE_BETWEEN_3_AND_15_CHARACTERS.getMessage())
                 .getAllUsers().findBy(Condition.exactText(newUser.getUsername() + "\nUSER")).shouldNotBe(Condition.exist);
 
-        // Проверка, что юзер НЕ создан на API
+        // Assert user not created via API
         long usersWithSameUsernameAsNewUser = AdminSteps.getAllUsers().stream()
                 .filter(user -> user.getUsername().equals(newUser.getUsername())).count();
 
