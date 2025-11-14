@@ -1,15 +1,21 @@
 package ui.pages;
 
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.SelenideElement;
 import lombok.Getter;
 
+import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.$;
 
 @Getter
 public class UserDashboard extends BasePage<UserDashboard>{
     private SelenideElement welcomeText = $(Selectors.byClassName("welcome-text"));
     private SelenideElement createNewAccount = $(Selectors.byText("➕ Create New Account"));
+    private SelenideElement depositMoneyButton = $(byText("\uD83D\uDCB0 Deposit Money"));
+    private SelenideElement makeTransferButton = $(byText("🔄 Make a Transfer"));
+    private final SelenideElement profileButton = $(byText("Noname"));
+    private final SelenideElement userDashboardTitle = $(byText("User Dashboard"));
 
     @Override
     public String url() {
@@ -18,6 +24,32 @@ public class UserDashboard extends BasePage<UserDashboard>{
 
     public UserDashboard createNewAccount() {
         createNewAccount.click();
+        return this;
+    }
+
+    public DepositMoneyPage depositMoney() {
+        depositMoneyButton.click();
+        return getPage(DepositMoneyPage.class);
+    }
+
+    public TransferPage makeTransfer() {
+        makeTransferButton.click();
+        return getPage(TransferPage.class);
+    }
+
+    public UserDashboard checkUserDashboardVisible() {
+        userDashboardTitle.shouldBe(Condition.visible);
+        return this;
+    }
+
+    public EditProfilePage openProfile() {
+        profileButton.click();
+        return new EditProfilePage();
+    }
+
+
+    public UserDashboard checkWelcomeText(String name) {
+        welcomeText.shouldHave(Condition.text("Welcome, " + name + "!"));
         return this;
     }
 }
