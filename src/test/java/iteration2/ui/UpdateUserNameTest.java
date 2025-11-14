@@ -2,12 +2,11 @@ package iteration2.ui;
 
 import api.assertions.ProfileAssertions;
 import api.generators.RandomData;
-import api.models.CreateUserRequest;
 import api.models.GetCustomerProfileResponse;
-import api.requests.steps.AdminSteps;
 import api.requests.steps.CustomerSteps;
 import api.specs.RequestSpecs;
-import io.restassured.specification.RequestSpecification;
+import common.annotations.UserSession;
+import common.storage.SessionStorage;
 import iteration1.ui.BaseUiTest;
 import org.junit.jupiter.api.Test;
 import ui.pages.BankAlert;
@@ -15,27 +14,19 @@ import ui.pages.UserDashboard;
 
 public class UpdateUserNameTest extends BaseUiTest {
     @Test
+    @UserSession
     public void userCanUpdateNameTest() {
-        // 1 - Create a new user via API
-        CreateUserRequest userRequest = AdminSteps.createUser();
+        var user = SessionStorage.getUser();
 
-        // 2 - Get customer profile before update via API
-        RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
+        var requestSpec = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
+
         GetCustomerProfileResponse initialProfile = CustomerSteps.getCustomerProfile(requestSpec);
-
-        // 3 - Get name from profile
         String initialName = initialProfile.getName();
 
-        // 4 - Prepare a new valid name
         String newUserName = RandomData.getValidName();
 
-        // 5 - Assert new name is different from initial name
         ProfileAssertions.assertNewNameIsDifferent(softly, newUserName, initialName);
 
-        // 6 - Set authToken to localStorage via API
-        authAsUser(userRequest);
-
-        // 7 - Open dashboard page
         new UserDashboard()
                 .open()
                 .openProfile()
@@ -47,32 +38,23 @@ public class UpdateUserNameTest extends BaseUiTest {
                 .goHome()
                 .checkWelcomeText(newUserName);
 
-        // 8 - Get profile after update
         GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 9 - Assert that username has not changed
-        ProfileAssertions.assertUsernameUnchanged(softly, userRequest.getUsername(), updatedProfile);
-
-        // 10 - Assert that name changed
+        ProfileAssertions.assertUsernameUnchanged(softly, user.getUsername(), updatedProfile);
         ProfileAssertions.assertNameUpdated(softly, updatedProfile, newUserName);
     }
 
     @Test
+    @UserSession
     public void userCannotUpdateNameTest() {
-        // 1 - Create a new user via API
-        CreateUserRequest userRequest = AdminSteps.createUser();
+        var user = SessionStorage.getUser();
 
-        // 2 - Get customer profile before update via API
-        RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
+        var requestSpec = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
+
         GetCustomerProfileResponse initialProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 3 - Prepare invalid name (single word)
         String invalidName = RandomData.getInvalidNameSingleWord();
 
-        // 4 - Set authToken to localStorage via API
-        authAsUser(userRequest);
-
-        // 5 - Open dashboard page
         new UserDashboard()
                 .open()
                 .openProfile()
@@ -84,10 +66,8 @@ public class UpdateUserNameTest extends BaseUiTest {
                 .goHome()
                 .checkWelcomeText("noname");
 
-        // 6 - Get customer profile after update
         GetCustomerProfileResponse updatedProfile = CustomerSteps.getCustomerProfile(requestSpec);
 
-        // 7 - Assert that name has not changed via API
         ProfileAssertions.assertNameUnchanged(softly, initialProfile, updatedProfile);
     }
 }

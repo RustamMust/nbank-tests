@@ -2,86 +2,81 @@ package iteration2.ui;
 
 import api.assertions.BalanceAssertions;
 import api.generators.RandomData;
-import api.helpers.AccountStepsHelper;
-import api.models.CreateUserRequest;
+import api.models.CreateAccountResponse;
 import api.requests.steps.AccountsSteps;
-import api.requests.steps.AdminSteps;
 import api.specs.RequestSpecs;
-import io.restassured.specification.RequestSpecification;
+import common.annotations.UserSession;
+import common.storage.SessionStorage;
 import iteration1.ui.BaseUiTest;
 import org.junit.jupiter.api.Test;
 import ui.pages.BankAlert;
 import ui.pages.UserDashboard;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class DepositMoneyTest extends BaseUiTest {
     @Test
+    @UserSession
     public void userCanDepositMoneyTest() {
-        // 1 - Create a new user via API
-        CreateUserRequest userRequest = AdminSteps.createUser();
+        var userSteps = SessionStorage.getSteps();
+        AccountsSteps.createAccount(RequestSpecs.authAsUser(
+                SessionStorage.getUser().getUsername(),
+                SessionStorage.getUser().getPassword()
+        ));
 
-        // 2 - Create an account via API
-        RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
-        AccountsSteps.createAccount(requestSpec);
+        List<CreateAccountResponse> accounts = userSteps.getAllAccounts();
+        assertThat(accounts).hasSize(1);
 
-        // 3 - Get account balance from profile via API
-        double initialBalance = AccountStepsHelper.getBalance(requestSpec);
+        CreateAccountResponse account = accounts.getFirst();
+        double initialBalance = account.getBalance();
 
-        // 4 - Set authToken to localStorage via API
-        authAsUser(userRequest);
+        int depositAmount = RandomData.getRandomBalance();
 
-        // 5 - Get random balance
-        int randomBalance = RandomData.getRandomBalance();
-
-        // 6 - Open dashboard page
         new UserDashboard()
                 .open()
                 .depositMoney()
                 .chooseAccount(1)
-                .enterAmount(randomBalance)
+                .enterAmount(depositAmount)
                 .submitDeposit()
                 .checkAlertMessageAndAccept(BankAlert.SUCCESSFULLY_DEPOSITED.getMessage());
 
         new UserDashboard().checkUserDashboardVisible();
 
-        // 7 - Get balance after deposit via API
-        double finalBalance = AccountStepsHelper.getBalance(requestSpec);
+        double finalBalance = userSteps.getAllAccounts().getFirst().getBalance();
 
-        // 8 - Assert balance from profile after deposit via API
-        BalanceAssertions.assertBalanceIncreasedBy(softly, initialBalance, finalBalance, randomBalance);
+        BalanceAssertions.assertBalanceIncreasedBy(softly, initialBalance, finalBalance, depositAmount);
     }
 
     @Test
+    @UserSession
     public void userCannotDepositInvalidAmountMoneyTest() {
-        // 1 - Create a new user via API
-        CreateUserRequest userRequest = AdminSteps.createUser();
+        var userSteps = SessionStorage.getSteps();
+        AccountsSteps.createAccount(RequestSpecs.authAsUser(
+                SessionStorage.getUser().getUsername(),
+                SessionStorage.getUser().getPassword()
+        ));
 
-        // 2 - Create an account via API
-        RequestSpecification requestSpec = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
-        AccountsSteps.createAccount(requestSpec);
+        List<CreateAccountResponse> accounts = userSteps.getAllAccounts();
+        assertThat(accounts).hasSize(1);
 
-        // 3 - Get account balance from profile via API
-        double initialBalance = AccountStepsHelper.getBalance(requestSpec);
+        CreateAccountResponse account = accounts.getFirst();
+        double initialBalance = account.getBalance();
 
-        // 4 - Set authToken to localStorage via API
-        authAsUser(userRequest);
+        int depositAmount = 0;
 
-        // 5 - Get invalid balance
-        int randomBalance = 0;
-
-        // 6 - Open dashboard page
         new UserDashboard()
                 .open()
                 .depositMoney()
                 .chooseAccount(1)
-                .enterAmount(randomBalance)
+                .enterAmount(depositAmount)
                 .submitInvalidDeposit()
                 .checkAlertMessageAndAccept(BankAlert.INVALID_AMOUNT.getMessage())
                 .checkDepositPageVisible();
 
-        // 7 - Get balance after deposit via API
-        double finalBalance = AccountStepsHelper.getBalance(requestSpec);
+        double finalBalance = SessionStorage.getSteps().getAllAccounts().getFirst().getBalance();
 
-        // 8 - Assert balance did not change via API
         BalanceAssertions.assertBalanceUnchanged(softly, initialBalance, finalBalance);
     }
 }
