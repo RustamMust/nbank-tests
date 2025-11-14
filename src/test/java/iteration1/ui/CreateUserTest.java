@@ -5,11 +5,8 @@ import api.models.CreateUserRequest;
 import api.models.CreateUserResponse;
 import api.models.comparison.ModelAssertions;
 import api.requests.steps.AdminSteps;
-import com.codeborne.selenide.Condition;
 import common.annotations.AdminSession;
-import common.extensions.AdminSessionExtension;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import ui.pages.AdminPanel;
 import ui.pages.BankAlert;
 
