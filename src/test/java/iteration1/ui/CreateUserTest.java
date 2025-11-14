@@ -5,27 +5,24 @@ import api.models.CreateUserRequest;
 import api.models.CreateUserResponse;
 import api.models.comparison.ModelAssertions;
 import api.requests.steps.AdminSteps;
-import com.codeborne.selenide.Condition;
+import common.annotations.AdminSession;
 import org.junit.jupiter.api.Test;
 import ui.pages.AdminPanel;
 import ui.pages.BankAlert;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CreateUserTest extends BaseUiTest {
     @Test
+    @AdminSession
     public void adminCanCreateUserTest() {
-        CreateUserRequest admin = CreateUserRequest.getAdmin();
-
-        // Set authToken to localStorage via API
-        authAsUser(admin);
-
         // Create a new user
         CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
 
-        new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
+        assertTrue(new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
                 .checkAlertMessageAndAccept(BankAlert.USER_CREATED_SUCCESSFULLY.getMessage())
-                .getAllUsers().findBy(Condition.exactText(newUser.getUsername() + "\nUSER")).shouldBe(Condition.visible);
+                .getAllUsers().stream().anyMatch(userBage -> userBage.getUsername().equals(newUser.getUsername())));
 
         // Assert user created via API
         CreateUserResponse createdUser = AdminSteps.getAllUsers().stream()
@@ -36,20 +33,16 @@ public class CreateUserTest extends BaseUiTest {
     }
 
     @Test
+    @AdminSession
     public void adminCannotCreateUserWithInvalidDataTest() {
-        CreateUserRequest admin = CreateUserRequest.getAdmin();
-
-        // Set authToken to localStorage via API
-        authAsUser(admin);
-
         // Create a new user
         CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
         newUser.setUsername("a");
 
         // Assert alert "Username must be between 3 and 15 characters"
-        new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
+        assertTrue(new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
                 .checkAlertMessageAndAccept(BankAlert.USERNAME_MUST_BE_BETWEEN_3_AND_15_CHARACTERS.getMessage())
-                .getAllUsers().findBy(Condition.exactText(newUser.getUsername() + "\nUSER")).shouldNotBe(Condition.exist);
+                .getAllUsers().stream().noneMatch(userBage -> userBage.getUsername().equals(newUser.getUsername())));
 
         // Assert user not created via API
         long usersWithSameUsernameAsNewUser = AdminSteps.getAllUsers().stream()
