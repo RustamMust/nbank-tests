@@ -2,11 +2,14 @@ package iteration1.api;
 
 import api.requests.steps.AdminSteps;
 import api.utils.TestContext;
+import common.extensions.TimingExtension;
 import org.assertj.core.api.SoftAssertions;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(TimingExtension.class)
 public class BaseTest {
     protected static final Offset<Double> MONEY_TOLERANCE = Offset.offset(0.001);
     protected SoftAssertions softly;
