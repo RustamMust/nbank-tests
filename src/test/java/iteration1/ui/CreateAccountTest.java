@@ -15,7 +15,6 @@ public class CreateAccountTest extends BaseUiTest {
     @Test
     @UserSession
     public void userCanCreateAccountTest() {
-        // 1 - Create an account
         new UserDashboard().open().createNewAccount();
 
         List<CreateAccountResponse> createdAccounts = SessionStorage.getSteps().getAllAccounts();

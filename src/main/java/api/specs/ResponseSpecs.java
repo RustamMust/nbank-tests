@@ -27,7 +27,7 @@ public class ResponseSpecs {
             String errorKey, List<String> errorValues) {
         return defaultResponseBuilder()
                 .expectStatusCode(HttpStatus.SC_BAD_REQUEST)
-                .expectBody(errorKey, Matchers.equalTo(errorValues))
+                .expectBody(errorKey, Matchers.containsInAnyOrder(errorValues.toArray()))
                 .build();
     }
 
