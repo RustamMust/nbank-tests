@@ -1,5 +1,7 @@
 package iteration1.api;
 
+import api.dao.UserDao;
+import api.dao.comparisson.DaoAndModelAssertions;
 import api.generators.RandomModelGenerator;
 import api.models.CreateUserRequest;
 import api.models.CreateUserResponse;
@@ -7,6 +9,7 @@ import api.models.comparison.ModelAssertions;
 import api.requests.skeleton.Endpoint;
 import api.requests.skeleton.requesters.CrudRequester;
 import api.requests.skeleton.requesters.ValidatedCrudRequester;
+import api.requests.steps.DataBaseSteps;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
 import org.junit.jupiter.api.Test;
@@ -16,6 +19,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
 import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class CreateUserTest extends BaseTest {
 
@@ -33,6 +38,9 @@ public class CreateUserTest extends BaseTest {
 
         // 3 - Assert body of creation response
         ModelAssertions.assertThatModels(createUserRequest, createUserResponse).match();
+
+        UserDao userDao = DataBaseSteps.getUserByUsername(createUserRequest.getUsername());
+        DaoAndModelAssertions.assertThat(createUserResponse, userDao).match();
     }
 
     // Prepare invalid user creation data
@@ -76,5 +84,7 @@ public class CreateUserTest extends BaseTest {
                 Endpoint.ADMIN_USER,
                 ResponseSpecs.requestReturnsBadRequest(errorKey, errorValue))
                 .post(createUserRequest);
+
+        assertNull(DataBaseSteps.getUserByUsername(createUserRequest.getUsername()));
     }
 }
