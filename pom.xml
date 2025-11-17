@@ -105,6 +105,11 @@
             <artifactId>swagger-coverage-rest-assured</artifactId>
             <version>1.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock-standalone</artifactId>
+            <version>3.4.2</version>
+        </dependency>
     </dependencies>
 
     <build>

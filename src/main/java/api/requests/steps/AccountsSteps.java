@@ -1,14 +1,11 @@
 package api.requests.steps;
 
-import io.restassured.specification.RequestSpecification;
-import api.models.DepositMoneyRequest;
-import api.models.DepositMoneyResponse;
-import api.models.ErrorType;
-import api.models.TransferMoneyRequest;
+import api.models.*;
 import api.requests.skeleton.Endpoint;
 import api.requests.skeleton.requesters.CrudRequester;
 import api.requests.skeleton.requesters.ValidatedCrudRequester;
 import api.specs.ResponseSpecs;
+import io.restassured.specification.RequestSpecification;
 
 public class AccountsSteps {
     public static void createAccount(RequestSpecification userSpec) {
@@ -90,5 +87,20 @@ public class AccountsSteps {
             ).post(depositRequest);
             default -> throw new IllegalArgumentException("Unsupported error type: " + errorType);
         }
+    }
+
+    public static TransferMoneyResponse transferWithFraudCheck(RequestSpecification senderSpec, int senderAccountId, int receiverAccountId, double amount) {
+        TransferMoneyRequest transferRequest = TransferMoneyRequest.builder()
+                    .senderAccountId(senderAccountId)
+                    .receiverAccountId(receiverAccountId)
+                    .amount(amount)
+                    .description("Test transfer with fraud check")
+                    .build();
+
+            return new ValidatedCrudRequester<TransferMoneyResponse>(
+                    senderSpec,
+                    Endpoint.TRANSFER_WITH_FRAUD_CHECK,
+                    ResponseSpecs.requestReturnsOK()).post(transferRequest);
+
     }
 }
