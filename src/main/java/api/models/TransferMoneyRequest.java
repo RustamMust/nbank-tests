@@ -13,4 +13,5 @@ public class TransferMoneyRequest extends BaseModel{
     private int senderAccountId;
     private int receiverAccountId;
     private double amount;
+    private String description;
 }

@@ -46,6 +46,16 @@ public enum Endpoint {
             "/customer/accounts",
             BaseModel.class,
             CreateAccountResponse.class
+    ),
+    TRANSFER_WITH_FRAUD_CHECK(
+            "/accounts/transfer-with-fraud-check",
+            TransferMoneyRequest.class,
+            TransferMoneyResponse.class
+    ),
+    FRAUD_CHECK_STATUS(
+            "/api/v1/accounts/fraud-check/{transactionId}",
+            BaseModel.class,
+            FraudCheckResponse.class
     );
     private final String url;
     private final Class<? extends BaseModel> requestModel;
