@@ -9,7 +9,17 @@ import java.util.List;
 
 
 public class SessionStorage {
-    private static final SessionStorage INSTANCE = new SessionStorage();
+    /* Thread Local - a way to make SessionStorage thread-safe
+
+    Each thread accessing INSTANCE.get() receives its OWN COPY
+
+    Map<Thread, SessionStorage>
+
+    Test1: created users, put them in SessionStorage (OWN COPY1), works with them
+    Test2: created users, put them in SessionStorage (OWN COPY2), works with them
+    Test3: created users, put them in SessionStorage (OWN COPY3), works with them
+    */
+    private static final ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
 
     private final LinkedHashMap<CreateUserRequest, UserSteps> userStepsMap = new LinkedHashMap<>();
 
@@ -17,7 +27,7 @@ public class SessionStorage {
 
     public static void addUsers(List<CreateUserRequest>users) {
         for (CreateUserRequest user: users) {
-            INSTANCE.userStepsMap.put(user, new UserSteps(user.getUsername(), user.getPassword()));
+            INSTANCE.get().userStepsMap.put(user, new UserSteps(user.getUsername(), user.getPassword()));
         }
     }
 
@@ -27,7 +37,7 @@ public class SessionStorage {
      * @return The CreateUserRequest object corresponding to the specified ordinal number.
      */
     public static CreateUserRequest getUser(int number) {
-        return new ArrayList<>(INSTANCE.userStepsMap.keySet()).get(number-1);
+        return new ArrayList<>(INSTANCE.get().userStepsMap.keySet()).get(number-1);
     }
 
     public static CreateUserRequest getUser() {
@@ -35,7 +45,7 @@ public class SessionStorage {
     }
 
     public static UserSteps getSteps(int number) {
-        return new ArrayList<>(INSTANCE.userStepsMap.values()).get(number-1);
+        return new ArrayList<>(INSTANCE.get().userStepsMap.values()).get(number-1);
     }
 
     public static UserSteps getSteps() {
@@ -43,6 +53,6 @@ public class SessionStorage {
     }
 
     public static void clear() {
-        INSTANCE.userStepsMap.clear();
+        INSTANCE.get().userStepsMap.clear();
     }
 }

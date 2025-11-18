@@ -1,9 +1,6 @@
 package iteration1.ui;
 
 import api.models.CreateAccountResponse;
-import api.models.CreateUserRequest;
-import api.requests.steps.AdminSteps;
-import api.requests.steps.UserSteps;
 import common.annotations.UserSession;
 import common.storage.SessionStorage;
 import org.junit.jupiter.api.Test;
@@ -18,7 +15,6 @@ public class CreateAccountTest extends BaseUiTest {
     @Test
     @UserSession
     public void userCanCreateAccountTest() {
-        // 1 - Create an account
         new UserDashboard().open().createNewAccount();
 
         List<CreateAccountResponse> createdAccounts = SessionStorage.getSteps().getAllAccounts();
