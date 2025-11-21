@@ -12,6 +12,7 @@ import api.requests.skeleton.requesters.ValidatedCrudRequester;
 import api.requests.steps.DataBaseSteps;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -23,7 +24,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class CreateUserTest extends BaseTest {
-
+    @Disabled("Need to add DB.")
     @Test
     public void adminCanCreateUserWithCorrectDataTest() {
         // 1 - Prepare data for user creation
@@ -70,6 +71,7 @@ public class CreateUserTest extends BaseTest {
                         List.of("Username must contain only letters, digits, dashes, underscores, and dots")));
     }
 
+    @Disabled("Need to add DB.")
     @MethodSource("userInvalidData")
     @ParameterizedTest
     public void adminCanNotCreateUserWithInvalidData(

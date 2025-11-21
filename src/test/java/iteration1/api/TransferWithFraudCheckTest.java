@@ -11,6 +11,7 @@ import api.specs.RequestSpecs;
 import common.annotations.FraudCheckMock;
 import common.extensions.FraudCheckWireMockExtension;
 import common.extensions.TimingExtension;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class TransferWithFraudCheckTest extends BaseTest {
     private TransferMoneyResponse transferResponse;
 
+    @Disabled("Need to add DB.")
     @Test
     @FraudCheckMock(
             status = "SUCCESS",
