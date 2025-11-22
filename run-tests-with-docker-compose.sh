@@ -29,14 +29,15 @@ docker build -t $IMAGE_NAME .
 
 echo ">>> Запуск тестов"
 docker run --rm \
+  --network nbank-network \
   -v "$TEST_OUTPUT_DIR/logs":/app/logs \
   -v "$TEST_OUTPUT_DIR/results":/app/target/surefire-reports \
   -v "$TEST_OUTPUT_DIR/report":/app/target/site \
   -e TEST_PROFILE="$TEST_PROFILE" \
-  -e APIBASEURL=http://localhost:4111 \
-  -e UIBASEURL=http://localhost:3000 \
-  -e SELENOID_URL=http://localhost:4444 \
-  -e SELENOID_UI_URL=http://localhost:8080 \
+  -e APIBASEURL=http://backend:4111 \
+  -e UIBASEURL=http://frontend:80 \
+  -e SELENOID_URL=http://selenoid:4444 \
+  -e SELENOID_UI_URL=http://selenoid-ui:8080 \
   $IMAGE_NAME
 
 echo ">>> Тесты завершены"
