@@ -26,8 +26,9 @@ public class TransferMoneyTest extends BaseTest {
         // 3 - Get sender account id from profile
         int senderAccountId = AccountStepsHelper.getAccountId(senderSpec);
 
-        // 4 - Deposit to sender account
-        int randomBalance = RandomData.getRandomBalance();
+        // 4 - Deposit to sender's account (twice, since a single deposit cannot exceed 5000)
+        int randomBalance = 5000;
+        AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
         AccountsSteps.depositMoney(senderSpec, senderAccountId, randomBalance);
 
         // 5 - Create receiver user
