@@ -9,6 +9,7 @@ import api.requests.skeleton.requesters.CrudRequester;
 import api.requests.skeleton.requesters.ValidatedCrudRequester;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import common.helpers.StepLogger;
 import org.apache.http.client.protocol.ResponseAuthCache;
 
 import java.util.List;
@@ -19,10 +20,14 @@ public class AdminSteps {
         CreateUserRequest userRequest = RandomModelGenerator.generate(CreateUserRequest.class);
 
         // 2 - Create a new user
-        CreateUserResponse userResponse = new ValidatedCrudRequester<CreateUserResponse>(RequestSpecs.adminSpec(),
-                Endpoint.ADMIN_USER,
-                ResponseSpecs.entityWasCreated())
-                .post(userRequest);
+        CreateUserResponse userResponse = StepLogger.log(
+                "Admin creates user " + userRequest.getUsername(),
+                () -> new ValidatedCrudRequester<CreateUserResponse>(
+                        RequestSpecs.adminSpec(),
+                        Endpoint.ADMIN_USER,
+                        ResponseSpecs.entityWasCreated()
+                ).post(userRequest)
+        );
 
         // 3 - Register created user for later cleanup
         TestContext.registerUser(
@@ -43,9 +48,11 @@ public class AdminSteps {
     }
 
     public static List<CreateUserResponse> getAllUsers() {
-        return new ValidatedCrudRequester<CreateUserResponse>(
-                RequestSpecs.adminSpec(),
-                Endpoint.ADMIN_USER,
-                ResponseSpecs.requestReturnsOK()).getAll(CreateUserResponse[].class);
+        return StepLogger.log("Admin gets all users", () -> {
+            return new ValidatedCrudRequester<CreateUserResponse>(
+                    RequestSpecs.adminSpec(),
+                    Endpoint.ADMIN_USER,
+                    ResponseSpecs.requestReturnsOK()).getAll(CreateUserResponse[].class);
+        });
     }
 }
