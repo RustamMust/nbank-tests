@@ -1,0 +1,64 @@
+name: Run tests
+
+# триггер
+on: [ push, workflow_dispatch ]
+
+jobs: # аналог этапов
+  run-tests:
+    name: Set up services (review apps) and run tests
+    runs-on: ubuntu-latest
+    steps: # шаги конкретной job
+      - name: Checkout repository # копируем файлы репозитория внутрь CI агента
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '21'
+
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Install jq if needed
+        run: |
+          if ! command -v jq &> /dev/null; then
+            echo "Installing jq..."
+            sudo apt-get update && sudo apt-get install -y jq
+          else
+            echo "jq is already installed: $(jq --version)"
+          fi
+
+      - name: Set up services
+        run: cd infra/docker_compose && bash restart_docker.sh && cd ../..
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to start..."
+          sleep 20
+          echo "Checking services status..."
+          docker ps
+          echo "Checking if services are accessible..."
+          timeout 30 bash -c 'until curl -f http://localhost:4111/actuator/health 2>/dev/null; do echo "Waiting for backend..."; sleep 2; done' || true
+          timeout 30 bash -c 'until curl -f http://localhost:4444/status 2>/dev/null; do echo "Waiting for Selenoid..."; sleep 2; done' || true
+          timeout 30 bash -c 'until curl -f http://localhost:80 2>/dev/null; do echo "Waiting for frontend..."; sleep 2; done' || true
+
+      - name: Make Maven wrapper executable
+        run: chmod +x ./mvnw
+
+      - name: Run API tests
+        run: ./mvnw clean test -q -P api
+        env:
+          APIBASEURL: http://localhost:4111
+
+      - name: Run UI tests
+        run: ./mvnw clean test -q -P ui
+        env:
+          APIBASEURL: http://localhost:4111
+          UIBASEURL: http://nginx:80
+          UIREMOTE: http://localhost:4444/wd/hub

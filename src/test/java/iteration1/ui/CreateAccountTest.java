@@ -1,6 +1,7 @@
 package iteration1.ui;
 
 import api.models.CreateAccountResponse;
+import api.utils.RetryUtils;
 import common.annotations.UserSession;
 import common.storage.SessionStorage;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,12 @@ public class CreateAccountTest extends BaseUiTest {
     public void userCanCreateAccountTest() {
         new UserDashboard().open().createNewAccount();
 
-        List<CreateAccountResponse> createdAccounts = SessionStorage.getSteps().getAllAccounts();
+        List<CreateAccountResponse> createdAccounts = RetryUtils.retry(
+                () -> SessionStorage.getSteps().getAllAccounts(),
+                list -> list.size() == 1,
+                5,      // max 5 attempts
+                2000    // pause 2 seconds
+        );
 
         assertThat(createdAccounts).hasSize(1);
 
