@@ -18,7 +18,7 @@ public class CreateAccountTest extends BaseUiTest {
     public void userCanCreateAccountTest() {
         new UserDashboard().open().createNewAccount();
 
-        List<CreateAccountResponse> createdAccounts = RetryUtils.retry(
+        List<CreateAccountResponse> createdAccounts = RetryUtils.retry("Create account",
                 () -> SessionStorage.getSteps().getAllAccounts(),
                 list -> list.size() == 1,
                 5,      // max 5 attempts
