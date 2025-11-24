@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/**'
+      - 'src/**'
   workflow_dispatch:
 
 jobs:
