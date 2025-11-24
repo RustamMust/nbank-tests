@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'src/**'
+      - 'checkstyle.xml'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 jobs:
