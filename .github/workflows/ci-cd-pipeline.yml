@@ -3,7 +3,6 @@ name: CI/CD Pipeline
 on:
   push:
     paths:
-      - 'checkstyle.xml'
       - '.github/workflows/**'
   workflow_dispatch:
 
