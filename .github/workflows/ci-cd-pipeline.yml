@@ -3,29 +3,25 @@ name: CI/CD Pipeline
 on:
   push:
     paths:
-      - 'src/**'
       - 'checkstyle.xml'
       - '.github/workflows/**'
   workflow_dispatch:
 
 jobs:
-  build-test-deploy:
-    name: Build, Test, Checkstyle, and Push Docker Image
+  build-and-push:
+    name: Build, Checkstyle, and Push Docker Image
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up JDK
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'corretto'
           java-version: '21'
 
-      # 3. Cache Maven repository
       - name: Cache Maven repository
         uses: actions/cache@v4
         with:
@@ -34,55 +30,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-v2-
 
-      # 4. Install jq
-      - name: Install jq if needed
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
-
-      # 5. Set up Docker services
-      - name: Set up services
-        run: cd infra/docker_compose && bash restart_docker.sh && cd ../..
-
-      # 6. Wait for services to be ready
-      - name: Wait for services to start
-        run: |
-          echo "Waiting for backend..."
-          timeout 30 bash -c 'until curl -f http://localhost:4111/actuator/health 2>/dev/null; do sleep 2; done'
-          echo "Waiting for Selenoid..."
-          timeout 30 bash -c 'until curl -f http://localhost:4444/status 2>/dev/null; do sleep 2; done'
-          echo "Waiting for frontend..."
-          timeout 30 bash -c 'until curl -f http://localhost:80 2>/dev/null; do sleep 2; done'
-
-      # 7. Make Maven wrapper executable
-      - name: Make Maven wrapper executable
-        run: chmod +x ./mvnw
-
-      # 8. Run Maven: Build, Test, Checkstyle
-      - name: Build, Test & Checkstyle
+      - name: Build & Checkstyle
         run: ./mvnw clean verify
 
-      # 9. Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 10. Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 11. Build & push Docker image
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/nbank-tests:${{ github.sha }}
-
-      # 12. Tear down services
-      - name: Clean up services
-        if: always()
-        run: cd infra/docker_compose && docker compose down
