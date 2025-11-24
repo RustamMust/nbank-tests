@@ -33,6 +33,9 @@ jobs:
       - name: Make Maven wrapper executable
         run: chmod +x ./mvnw
 
+      - name: List files for debugging
+        run: ls -la
+
       - name: Build & Checkstyle
         run: ./mvnw clean verify -DskipTests
 
