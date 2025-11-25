@@ -95,7 +95,3 @@ jobs: # аналог этапов
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
-
-      - name: Clean up services
-        if: always()
-        run: cd infra/docker_compose && docker compose down
