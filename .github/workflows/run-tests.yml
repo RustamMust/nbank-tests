@@ -58,7 +58,7 @@ jobs: # аналог этапов
           APIVERSION: /api/v1
 
       - name: Run UI tests
-        run: ./mvnw clean test -q -P ui
+        run: ./mvnw test -q -P ui
         env:
           APIBASEURL: http://localhost:4111
           UIBASEURL: http://nginx:80
