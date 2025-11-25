@@ -55,6 +55,7 @@ jobs: # аналог этапов
         run: ./mvnw clean test -q -P api
         env:
           APIBASEURL: http://localhost:4111
+          APIVERSION: /api/v1
 
       - name: Run UI tests
         run: ./mvnw clean test -q -P ui
@@ -62,6 +63,7 @@ jobs: # аналог этапов
           APIBASEURL: http://localhost:4111
           UIBASEURL: http://nginx:80
           UIREMOTE: http://localhost:4444/wd/hub
+          APIVERSION: /api/v1
 
       - name: Run Swagger coverage
         if: always()
