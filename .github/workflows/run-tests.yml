@@ -65,36 +65,10 @@ jobs: # аналог этапов
           UIREMOTE: http://localhost:4444/wd/hub
           APIVERSION: /api/v1
 
-      # ------------------------
-      # DEBUG BEFORE SWAGGER COVERAGE
-      # ------------------------
-      - name: Debug Swagger Coverage
+      - name: Prepare Swagger coverage folder
         run: |
-          echo "📂 Current directory:"
-          pwd
-          ls -la
-          echo "📂 target directory:"
-          ls -la target || true
-          echo "📂 target/swagger-coverage-output directory:"
-          ls -la target/swagger-coverage-output || true
-
-          echo "🌐 Checking API endpoint availability..."
-          curl -v http://localhost:4111/v3/api-docs || true
-
-          echo "📝 Checking coverage JSON if it exists..."
-          if [ -f target/swagger-coverage-output/swagger-coverage-results.json ]; then
-            echo "Coverage JSON found!"
-            head -n 20 target/swagger-coverage-output/swagger-coverage-results.json
-          else
-            echo "⚠️ Coverage JSON not found!"
-          fi
-
-          echo "⚡ Attempting to run Swagger Coverage in verbose mode..."
-          chmod +x ./.swagger-coverage-commandline/bin/swagger-coverage-commandline
-          ./.swagger-coverage-commandline/bin/swagger-coverage-commandline \
-            -s http://localhost:4111/v3/api-docs \
-            -i target/swagger-coverage-output \
-            --verbose || echo "Swagger Coverage exited with error, debug info above"
+          mkdir -p target/swagger-coverage-output
+          cp -r swagger-coverage-output/* target/swagger-coverage-output/ || true
 
       - name: Run Swagger coverage
         if: always()
