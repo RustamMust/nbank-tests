@@ -55,10 +55,99 @@ jobs: # аналог этапов
         run: ./mvnw clean test -q -P api
         env:
           APIBASEURL: http://localhost:4111
+          APIVERSION: /api/v1
 
       - name: Run UI tests
-        run: ./mvnw clean test -q -P ui
+        run: ./mvnw test -q -P ui
         env:
           APIBASEURL: http://localhost:4111
           UIBASEURL: http://nginx:80
           UIREMOTE: http://localhost:4444/wd/hub
+          APIVERSION: /api/v1
+
+      - name: Prepare Swagger coverage folder
+        run: |
+          mkdir -p target/swagger-coverage-output
+          cp -r swagger-coverage-output/* target/swagger-coverage-output/ || true
+
+      - name: Run Swagger coverage
+        if: always()
+        run: |
+          chmod +x ./.swagger-coverage-commandline/bin/swagger-coverage-commandline
+          ./.swagger-coverage-commandline/bin/swagger-coverage-commandline \
+          -s http://localhost:4111/v3/api-docs \
+          -i target/swagger-coverage-output
+
+      # ------------------------
+      # LOAD HISTORY FROM GH-PAGES
+      # ------------------------
+      - name: Load test report history
+        uses: actions/checkout@v4
+        if: always()
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      # ------------------------
+      #   INSTALL ALLURE CLI
+      # ------------------------
+      - name: Download Allure CLI
+        if: always()
+        run: |
+          wget https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.zip
+          unzip allure-2.27.0.zip -d allure
+
+      # ------------------------
+      #   GENERATE ALLURE REPORT
+      # ------------------------
+      - name: Build Allure Test Report
+        if: always()
+        run: |
+          ./allure/allure-2.27.0/bin/allure generate target/allure-results \
+            -o allure-report --clean
+                
+          # story:
+          # переносим историю
+          rm -rf allure-report/history
+          if [ -d gh-pages/history ]; then
+            cp -R gh-pages/history allure-report/
+          fi
+          
+          # сохраняем историю для следующего запуска
+          mkdir -p allure-history
+          cp -R allure-report/* allure-history/
+            
+      # ------------------------
+      # SWAGGER COVERAGE → ВСТРАИВАЕМ В ALLURE
+      # ------------------------
+      - name: Build Swagger coverage report
+        if: always()
+        run: |
+          mkdir -p allure-history/${GITHUB_RUN_NUMBER}/widgets
+          
+          # HTML отчёт
+          if [ -f swagger-coverage-report.html ]; then
+            sudo cp swagger-coverage-report.html allure-history/${GITHUB_RUN_NUMBER}/
+          fi
+          
+          # JSON с покрытием
+          if [ -f swagger-coverage-results.json ]; then
+            sudo cp swagger-coverage-results.json \
+              allure-history/${GITHUB_RUN_NUMBER}/widgets/swagger-coverage.json
+          elif [ -f target/swagger-coverage-output/swagger-coverage-results.json ]; then
+            sudo cp target/swagger-coverage-output/swagger-coverage-results.json \
+              allure-history/${GITHUB_RUN_NUMBER}/widgets/swagger-coverage.json
+          else
+            echo "⚠️ swagger-coverage JSON not found"
+          fi
+            
+      # ------------------------
+      #   DEPLOY GH-PAGES
+      # ------------------------
+      - name: Publish test report
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
