@@ -8,7 +8,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum Endpoint {
     ADMIN_USER(
-            "admin/users",
+            "/admin/users",
             CreateUserRequest.class,
             CreateUserResponse.class
     ),
