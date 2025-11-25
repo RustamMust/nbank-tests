@@ -67,27 +67,111 @@ jobs: # аналог этапов
 
       - name: Run Swagger coverage
         if: always()
-        run: .swagger-coverage-commandline/bin/swagger-coverage-commandline -s http://localhost:4111/v3/api-docs -i target/swagger-coverage-output
+        run: |
+          chmod +x ./.swagger-coverage-commandline/bin/swagger-coverage-commandline
+          ./.swagger-coverage-commandline/bin/swagger-coverage-commandline \
+          -s http://localhost:4111/v3/api-docs \
+          -i target/swagger-coverage-output
 
+      # ------------------------
+      # LOAD HISTORY FROM GH-PAGES
+      # ------------------------
       - name: Load test report history
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         if: always()
         with:
           ref: gh-pages
           path: gh-pages
 
-      - name: Build test report
-        uses: simple-elf/allure-report-action@v1.6
+      # ------------------------
+      #   INSTALL ALLURE CLI
+      # ------------------------
+      - name: Download Allure CLI
         if: always()
-        with:
-          gh_pages: gh-pages
-          allure_results: target/allure-results
-          allure_history: allure-history
+        run: |
+          wget https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.zip
+          unzip allure-2.27.0.zip -d allure
 
+      # ------------------------
+      #   GENERATE ALLURE REPORT
+      # ------------------------
+      - name: Build Allure Test Report
+        if: always()
+        run: |
+          ./allure/allure-2.27.0/bin/allure generate target/allure-results \
+            -o allure-report --clean
+                
+          # story:
+          # переносим историю
+          rm -rf allure-report/history
+          if [ -d gh-pages/history ]; then
+            cp -R gh-pages/history allure-report/
+          fi
+          
+          # сохраняем историю для следующего запуска
+          mkdir -p allure-history
+          cp -R allure-report/* allure-history/
+            
+      # ------------------------
+      # SWAGGER COVERAGE → ВСТРАИВАЕМ В ALLURE
+      # ------------------------
       - name: Build Swagger coverage report
         if: always()
-        run: sudo cp swagger-coverage-report.html allure-history/${{ github.run_number }}
-
+        run: |
+          mkdir -p allure-history/${GITHUB_RUN_NUMBER}/widgets
+          
+          # HTML отчёт
+          if [ -f swagger-coverage-report.html ]; then
+            sudo cp swagger-coverage-report.html allure-history/${GITHUB_RUN_NUMBER}/
+          fi
+          
+          # JSON с покрытием
+          if [ -f swagger-coverage-results.json ]; then
+            sudo cp swagger-coverage-results.json \
+              allure-history/${GITHUB_RUN_NUMBER}/widgets/swagger-coverage.json
+          elif [ -f target/swagger-coverage-output/swagger-coverage-results.json ]; then
+            sudo cp target/swagger-coverage-output/swagger-coverage-results.json \
+              allure-history/${GITHUB_RUN_NUMBER}/widgets/swagger-coverage.json
+          else
+            echo "⚠️ swagger-coverage JSON not found"
+          fi
+            
+      # ------------------------
+      # COVERAGE QUALITY GATE
+      # ------------------------
+      - name: API coverage quality gate (>=50%)
+        if: always()
+        run: |
+          sudo apt-get update -y && sudo apt-get install -y jq
+          
+          CANDIDATES=(
+            "allure-history/${GITHUB_RUN_NUMBER}/widgets/swagger-coverage.json"
+            "allure-history/${GITHUB_RUN_NUMBER}/widgets/coverage.json"
+            "allure-report/widgets/swagger-coverage.json"
+            "allure-results/swagger-coverage.json"
+          )
+          
+          FILE=""
+          for f in "${CANDIDATES[@]}"; do
+            if [ -f "$f" ]; then FILE="$f"; break; fi
+          done
+          [ -z "$FILE" ] && echo "Coverage JSON not found" && exit 1
+          
+          PCT=$(jq -r '
+            if (.summary?.coverage?) then .summary.coverage
+            elif (.coverage?) then .coverage
+            else empty end
+          ' "$FILE")
+          
+          awk -v p="$PCT" -v t="50" 'BEGIN{
+            if (p<=1) p*=100;
+            if (p<t) { printf "❌ Coverage %.2f%% < %d%%\n", p, t; exit 1 }
+            else     { printf "✅ Coverage %.2f%% >= %d%%\n", p, t; exit 0 }
+          }'
+            
+      # ------------------------
+      #   DEPLOY GH-PAGES
+      # ------------------------
       - name: Publish test report
         uses: peaceiris/actions-gh-pages@v3
         if: always()
